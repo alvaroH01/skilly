@@ -35,36 +35,39 @@ export default function IncidentResolutionActions({
       const now = new Date().toLocaleString("es-CL");
 
       if (actionType === "reembolso") {
-        newStatus = "cancelado";
+        newStatus = "cerrado"; // estado válido: el servicio se cierra con devolución
         resolutionStamp = `\n\n[RESOLUCIÓN SKILLY: DEVOLUCIÓN AUTORIZADA]\n• Fecha dictamen: ${now}\n• Reembolso: ${refundPercentage}%\n• Justificación: ${resolutionNotes.trim() || "Devolución acordada bajo Términos y Condiciones Skilly por inasistencia o suspensión debidamente acreditada."}\n• Estado mediación: Resuelto / Reembolso procesado`;
       } else if (actionType === "reprogramar") {
         newStatus = "en_ejecucion";
         resolutionStamp = `\n\n[RESOLUCIÓN SKILLY: REPROGRAMACIÓN ACORDADA]\n• Fecha dictamen: ${now}\n• Nueva fecha propuesta: ${rescheduleDate || "A coordinar entre las partes"}\n• Compromiso: ${resolutionNotes.trim() || "Las partes acuerdan nueva fecha de entrega o sesión sin penalizaciones."}\n• Estado mediación: Reanudado / Reprogramación en curso`;
       } else {
-        newStatus = "activo";
+        newStatus = "en_ejecucion"; // el servicio continúa tras el acuerdo
         resolutionStamp = `\n\n[RESOLUCIÓN SKILLY: DISPUTA CERRADA]\n• Fecha cierre: ${now}\n• Dictamen mediador: ${resolutionNotes.trim() || "Caso archivado tras acuerdo mutuo entre cliente y profesional."}\n• Estado mediación: Finalizado con conformidad`;
       }
 
-      const updatedDesc = `${currentDescription || ""}${resolutionStamp}`;
+      // Leemos la descripción vigente para no perder lo escrito desde que se abrió la página
+      const { data: freshProject } = await supabase
+        .from("projects")
+        .select("description")
+        .eq("id", projectId)
+        .single();
 
-      const { error: updateError } = await supabase
+      const updatedDesc = `${freshProject?.description ?? currentDescription ?? ""}${resolutionStamp}`;
+
+      const { data: updatedRows, error: updateError } = await supabase
         .from("projects")
         .update({
           description: updatedDesc,
           status: newStatus,
         })
-        .eq("id", projectId);
+        .eq("id", projectId)
+        .select("id, status");
 
-      if (updateError) {
-        // Fallback si status enum tiene restricciones
-        const { error: fallbackError } = await supabase
-          .from("projects")
-          .update({
-            description: updatedDesc,
-          })
-          .eq("id", projectId);
+      if (updateError) throw updateError;
 
-        if (fallbackError) throw fallbackError;
+      // Una política RLS que bloquea el UPDATE no da error: afecta 0 filas
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error("No se pudo registrar el dictamen: sin permisos sobre el proyecto.");
       }
 
       setFeedbackMsg({

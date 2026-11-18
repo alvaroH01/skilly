@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skilly LATAM
 
-## Getting Started
+Plataforma web transaccional y curada que conecta a organizaciones (PyMEs, startups) con profesionales independientes. Proyecto de la asignatura **Proyecto Integrado** (INACAP).
 
-First, run the development server:
+- **Sitio en producción:** https://skilly-mocha.vercel.app
+- **Repositorio:** https://github.com/alvaroH01/skilly
+- **Equipo:** Álvaro Herrera, Valentín Robledo, Fernanda Cabezas
+- **Docente:** Teresa Jesús Tapia Soto
+
+## Qué hace
+
+Skilly no es un marketplace abierto: Skilly valida antes de publicar y antes de cobrar.
+
+1. El **Cliente** publica un proyecto y lo envía a validación.
+2. El **Administrador** de Skilly lo revisa, lo valida y lo publica en el catálogo (`/buscar`).
+3. Un **Profesional** postula con un monto y un plazo. Skilly puede sugerir una tarifa (curaduría comercial).
+4. El Cliente selecciona una propuesta.
+5. El Administrador genera una **orden de pago** con un enlace seguro de 24 horas.
+6. El Cliente paga desde ese enlace. Al confirmarse el pago, el proyecto pasa a **en ejecución** y ambas partes reciben una notificación.
+7. Al terminar, el Cliente envía una **evaluación privada** (sin estrellas públicas). Si hay problemas, cualquiera de las partes reporta una **incidencia** y Skilly media.
+
+Los cambios de estado críticos los valida la base de datos (funciones, triggers y políticas RLS), no el navegador.
+
+## Tecnologías
+
+| Capa | Tecnología |
+|---|---|
+| Framework | Next.js 16.3.2 (App Router), React 19, TypeScript |
+| Estilos | Tailwind CSS v4 |
+| Base de datos y autenticación | Supabase (PostgreSQL, Auth, Row Level Security) |
+| Despliegue | Vercel |
+| Calidad de código | ESLint, SonarQube |
+
+## Requisitos
+
+- Node.js 20 o superior
+- npm
+- Un proyecto de Supabase (gratuito sirve)
+
+## Instalación
 
 ```bash
+git clone https://github.com/alvaroH01/skilly.git
+cd skilly
+npm install
+cp .env.example .env.local      # luego completa los valores (ver más abajo)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variables de entorno
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Se definen en `.env.local` (este archivo no se sube al repositorio).
 
-## Learn More
+| Variable | Descripción |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase (Project Settings → API) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (publishable / anon) del mismo proyecto |
 
-To learn more about Next.js, take a look at the following resources:
+Solo se usa la clave **pública**. Nunca se debe poner en el código la clave `service_role`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Base de datos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Los scripts están en la carpeta [`database/`](database/). Se ejecutan en el **SQL Editor de Supabase**, en este orden:
 
-## Deploy on Vercel
+| Orden | Archivo | Qué hace |
+|---|---|---|
+| 1 | `01_crear_tablas.sql` | Crea las tablas con tipos, valores por defecto y restricciones |
+| 2 | `02_llaves_primarias.sql` | Agrega las llaves primarias |
+| 3 | `03_llaves_foraneas.sql` | Agrega las llaves foráneas |
+| 4 | `06_indices.sql` | Crea los índices |
+| 5 | `07_propuesta_correcciones.sql` | Políticas RLS, triggers de protección y funciones del flujo (validación, selección de propuesta, pagos) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Scripts de limpieza (solo para reiniciar un entorno de pruebas, **borran datos**):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `04_drop_llaves_foraneas.sql`
+- `05_drop_tablas.sql`
+
+El script 07 corre dentro de una transacción: si falla, no queda nada a medias. Pruébalo primero en un proyecto de Supabase de prueba.
+
+### Crear la cuenta de administrador
+
+Nadie puede asignarse el rol `admin` desde la aplicación (lo bloquea un trigger). Regístrate normalmente y luego, en el SQL Editor de Supabase:
+
+```sql
+update public.profiles set role = 'admin' where email = 'tu-correo@ejemplo.com';
+```
+
+## Roles
+
+| Rol | Qué puede hacer |
+|---|---|
+| `cliente` | Publicar proyectos, seleccionar propuestas, pagar, evaluar y reportar incidencias |
+| `profesional` | Explorar proyectos validados, postular, aceptar la tarifa sugerida, agendar entrevista |
+| `ambos` | Las dos cosas anteriores con la misma cuenta |
+| `admin` | Validar proyectos, curaduría de propuestas, generar órdenes de pago, mediar incidencias |
+
+## Pagos (modo simulado)
+
+El pago funciona con un flujo **simulado** (sandbox) que imita Webpay:
+
+- El administrador genera la orden desde `/api/payments/create`. El token se genera con `crypto.randomBytes(32)`; en la base de datos solo se guarda su hash SHA-256, con vencimiento de 24 horas.
+- El cliente abre `/pago/[token]` y confirma el pago. El código de autorización es de la forma `SBX-######`.
+- La integración real con Transbank (ambiente de integración) queda como etapa futura.
+
+## Estructura del proyecto
+
+```
+app/
+  api/payments/      endpoints de creación y confirmación de pagos
+  buscar/            catálogo público de proyectos validados
+  dashboard/         paneles por rol (cliente, profesional, admin)
+  login, registro, onboarding, verificar-correo, auth/
+  pago/[token]/      pantalla de pago con enlace seguro
+components/          componentes por módulo (admin, client, professional, payment, incidents)
+utils/supabase/      clientes de Supabase para navegador y servidor
+database/            scripts SQL del modelo físico
+```
+
+## Scripts de npm
+
+| Comando | Uso |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Compilación de producción |
+| `npm start` | Servidor de producción (después de `build`) |
+| `npm run lint` | Revisión con ESLint |
+
+## Estado actual y limitaciones conocidas
+
+- Pago simulado; no hay conciliación con una pasarela real.
+- Las evaluaciones privadas y las incidencias se guardan como texto en la descripción del proyecto. Está planificada una tabla propia con acceso restringido al administrador.
+- La agenda de entrevistas de validación no se guarda en una tabla.
+- La interfaz de carga y revisión de documentos del profesional está pendiente (la tabla ya existe).
+- Al seleccionar una propuesta, las demás no se rechazan automáticamente.
+
+## Despliegue
+
+El proyecto se despliega en Vercel desde la rama `main`. En Vercel se deben definir las mismas variables de entorno de la sección anterior.
