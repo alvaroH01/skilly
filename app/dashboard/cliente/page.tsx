@@ -72,9 +72,7 @@ export default async function DashboardPage() {
       proposals (
         id,
         status,
-        proposed_budget,
-        suggested_fee,
-        curation_notes,
+        proposed_amount,
         professional_id
       )
     `)

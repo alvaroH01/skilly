@@ -58,9 +58,10 @@ export default function CreatePaymentOrderButton({
       setPaymentUrl(data.paymentUrl);
 
       /*
-       * Actualizamos los Server Components.
+       * No se llama a router.refresh() aquí: al existir ya la orden, la página
+       * oculta este botón (condición !order) y la ventana con el enlace
+       * desaparecería a los pocos segundos. La recarga se hace en closeModal().
        */
-      router.refresh();
     } catch (err: any) {
       console.error(
         "Error generando orden de pago:",

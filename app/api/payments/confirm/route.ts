@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
+import { createHash, randomInt } from "crypto";
 import { createClient } from "@/utils/supabase/server";
 
+/**
+ * Confirma el pago de una orden.
+ *
+ * Seguridad:
+ *  - Exige sesión: solo el cliente de la orden (o un admin) puede pagarla.
+ *  - El monto y los cambios de estado los decide la base de datos
+ *    (función mark_payment_paid), nunca el navegador.
+ *  - La función actualiza orden, propuesta, proyecto y notificaciones en una
+ *    sola transacción, valida vigencia (24 h) y evita pagos repetidos.
+ *
+ * Nota: el cobro es una simulación (sandbox). En producción, esta ruta debe
+ * llamar a Transbank y solo invocar mark_payment_paid si el proveedor confirma.
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -14,88 +27,56 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenHash = createHash("sha256").update(token).digest("hex");
     const supabase = await createClient();
 
-    // 1. Buscamos la orden de pago por su token hash
-    const { data: order, error: orderError } = await supabase
-      .from("payment_orders")
-      .select("id, proposal_id, amount, status, token_expires_at")
-      .eq("payment_token_hash", tokenHash)
-      .single();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (orderError || !order) {
-      console.error("Orden no encontrada:", orderError);
+    if (!user) {
       return NextResponse.json(
-        { error: "No se encontró una orden de pago asociada a este enlace." },
-        { status: 404 }
+        {
+          error:
+            "Inicia sesión con la cuenta del cliente para completar el pago.",
+        },
+        { status: 401 }
       );
     }
 
-    if (order.status === "pagada") {
-      return NextResponse.json({
-        success: true,
-        alreadyPaid: true,
-        amount: order.amount,
-        message: "Esta orden ya fue pagada anteriormente.",
-      });
-    }
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const authorizationCode = `SBX-${randomInt(100000, 1000000)}`;
 
-    // 2. Comprobar vigencia
-    if (order.token_expires_at && new Date(order.token_expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: "El enlace de pago ha expirado (vigencia de 24 horas superada)." },
-        { status: 410 }
-      );
-    }
+    const { data, error } = await supabase.rpc("mark_payment_paid", {
+      p_token_hash: tokenHash,
+      p_provider: "webpay_sandbox",
+      p_provider_payment_id: authorizationCode,
+    });
 
-    // 3. Actualizar la orden a 'pagada'
-    const { error: updateOrderError } = await supabase
-      .from("payment_orders")
-      .update({
-        status: "pagada",
-      })
-      .eq("id", order.id);
+    if (error) {
+      const message = error.message || "No se pudo confirmar el pago.";
 
-    if (updateOrderError) {
-      console.error("Error actualizando orden a pagada:", updateOrderError);
-      return NextResponse.json(
-        { error: "No se pudo actualizar el estado de la orden." },
-        { status: 500 }
-      );
-    }
-
-    // 4. Actualizar la propuesta a 'confirmada' y el proyecto a 'en_ejecucion'
-    if (order.proposal_id) {
-      const { data: proposal } = await supabase
-        .from("proposals")
-        .select("id, project_id")
-        .eq("id", order.proposal_id)
-        .single();
-
-      if (proposal) {
-        await supabase
-          .from("proposals")
-          .update({ status: "confirmada" })
-          .eq("id", proposal.id);
-
-        if (proposal.project_id) {
-          await supabase
-            .from("projects")
-            .update({ status: "en_ejecucion" })
-            .eq("id", proposal.project_id);
-        }
+      if (message.includes("Solo el cliente")) {
+        return NextResponse.json({ error: message }, { status: 403 });
       }
+
+      if (message.includes("no es válido")) {
+        return NextResponse.json({ error: message }, { status: 410 });
+      }
+
+      console.error("Error mark_payment_paid:", error);
+      return NextResponse.json({ error: message }, { status: 400 });
     }
+
+    const result = Array.isArray(data) ? data[0] : data;
 
     return NextResponse.json({
       success: true,
-      orderId: order.id,
-      amount: order.amount,
-      authorizationCode: Math.floor(100000 + Math.random() * 900000).toString(),
+      orderId: result?.order_id,
+      amount: result?.amount,
+      authorizationCode,
       paidAt: new Date().toISOString(),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error inesperado confirmando pago:", err);
     return NextResponse.json(
       { error: "Error inesperado al procesar el pago." },

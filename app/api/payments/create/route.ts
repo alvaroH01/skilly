@@ -140,13 +140,17 @@ export async function POST(request: Request) {
        8. GUARDAR SOLO EL HASH
     ===================================================== */
 
-    const { error: updateError } = await supabase
-      .from("payment_orders")
-      .update({
-        payment_token_hash: tokenHash,
-        token_expires_at: expiresAt,
-      })
-      .eq("id", paymentOrderId);
+    // El UPDATE directo sobre payment_orders no está permitido por RLS (no existe
+    // política UPDATE). El token se registra con una función SECURITY DEFINER que
+    // verifica que quien llama sea admin y deja la orden en estado "enviado".
+    const { error: updateError } = await supabase.rpc(
+      "set_payment_order_token",
+      {
+        p_order_id: paymentOrderId,
+        p_token_hash: tokenHash,
+        p_expires_at: expiresAt,
+      }
+    );
 
     if (updateError) {
       console.error(

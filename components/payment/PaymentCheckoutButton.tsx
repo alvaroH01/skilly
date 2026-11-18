@@ -47,7 +47,8 @@ export default function PaymentCheckoutButton({
         amount: data.amount || amount,
       });
 
-      router.refresh();
+      // El comprobante se muestra desde el estado local. No se llama a router.refresh():
+      // la orden ya está pagada y la página dejaría de encontrarla (enlace inválido).
     } catch (err: any) {
       console.error("Error en pago:", err);
       setError(err?.message || "No se pudo completar el pago.");
