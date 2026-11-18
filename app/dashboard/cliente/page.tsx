@@ -87,7 +87,7 @@ export default async function DashboardPage() {
 
   // Conteo de proyectos por estado dentro del flujo de Skilly
   const inReviewCount = projectsList.filter(
-    (p) => p.status === "pendiente_validacion" || p.status === "borrador"
+    (p) => p.status === "borrador"
   ).length;
 
   const activeCount = projectsList.filter((p) => p.status === "activo").length;
@@ -432,7 +432,7 @@ export default async function DashboardPage() {
                     let statusLabel = "En revisión";
                     let badgeColor = "bg-[#fff8ec] text-[#b47a16] border-[#fce3b8]";
 
-                    if (project.status === "pendiente_validacion" || project.status === "borrador") {
+                    if (project.status === "borrador") {
                       statusLabel = "⏳ En revisión por Skilly";
                       badgeColor = "bg-[#fff8ec] text-[#b47a16] border-[#fce3b8]";
                     } else if (project.status === "activo") {

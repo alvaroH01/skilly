@@ -65,6 +65,7 @@ export default async function AdminProyectosPage() {
       deadline,
       skills,
       status,
+      validation_status,
       created_at
     `)
     .order("created_at", { ascending: false });
@@ -104,8 +105,8 @@ export default async function AdminProyectosPage() {
   /* =====================================================
      4. CONTADORES DE ESTADO
   ===================================================== */
-  const pendingCount = projects.filter(
-    (p) => p.status === "pendiente_validacion" || p.status === "en_revision"
+  const pendingCount = projects.filter((p) =>
+    ["pendiente", "reunion_agendada", "en_revision"].includes(p.validation_status)
   ).length;
   const activeCount = projects.filter((p) => p.status === "activo").length;
   const pausedCount = projects.filter((p) => p.status === "pausado").length;
@@ -214,9 +215,11 @@ export default async function AdminProyectosPage() {
                   name: "Organización Skilly",
                 };
 
-                const isPending =
-                  project.status === "pendiente_validacion" ||
-                  project.status === "en_revision";
+                const isPending = [
+                  "pendiente",
+                  "reunion_agendada",
+                  "en_revision",
+                ].includes(project.validation_status);
 
                 return (
                   <article
@@ -249,9 +252,9 @@ export default async function AdminProyectosPage() {
                             </span>
                           )}
 
-                          {project.status === "rechazado" && (
+                          {project.validation_status === "cambios_solicitados" && (
                             <span className="rounded-full bg-[#ffebee] px-3 py-1 text-xs font-semibold text-[#c62828]">
-                              ✕ Rechazado
+                              ✎ Cambios solicitados
                             </span>
                           )}
 
@@ -338,6 +341,7 @@ export default async function AdminProyectosPage() {
                           <ProjectValidationActions
                             projectId={project.id}
                             currentStatus={project.status}
+                            validationStatus={project.validation_status}
                             projectTitle={project.title}
                           />
                         </div>

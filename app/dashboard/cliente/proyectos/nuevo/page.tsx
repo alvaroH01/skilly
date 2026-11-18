@@ -113,8 +113,9 @@ export default function NuevoProyectoPage() {
         return;
       }
 
-      // Intentamos registrar con pendiente_validacion
-      let { error } = await supabase
+      // El proyecto nace como borrador (la base lo exige) y se envía a validación
+      // con la función segura submit_project_for_validation.
+      const { data: created, error } = await supabase
         .from("projects")
         .insert({
           client_id: user.id,
@@ -126,46 +127,25 @@ export default function NuevoProyectoPage() {
           budget_max: budgetMax ? Number(budgetMax) : null,
           deadline: deadline || null,
           skills,
-          status: "pendiente_validacion",
-        });
+          status: "borrador",
+          validation_status: "no_enviado",
+        })
+        .select("id")
+        .single();
 
-      // Si la base de datos tiene restricción CHECK en status (que solo acepta 'borrador' o 'pausado' o 'activo')
-      if (error && error.message.toLowerCase().includes("check constraint")) {
-        console.warn("Restricción de status detectada, reintentando con 'borrador'...");
-        const retry = await supabase
-          .from("projects")
-          .insert({
-            client_id: user.id,
-            title: title.trim(),
-            description: description.trim(),
-            category,
-            modality,
-            budget_min: budgetMin ? Number(budgetMin) : null,
-            budget_max: budgetMax ? Number(budgetMax) : null,
-            deadline: deadline || null,
-            skills,
-            status: "borrador",
-          });
+      if (!error && created?.id) {
+        const { error: submitError } = await supabase.rpc(
+          "submit_project_for_validation",
+          { p_project_id: created.id }
+        );
 
-        if (retry.error && retry.error.message.toLowerCase().includes("check constraint")) {
-          // Último recurso de compatibilidad si solo acepta 'activo' o 'pausado'
-          const retryPausado = await supabase
-            .from("projects")
-            .insert({
-              client_id: user.id,
-              title: title.trim(),
-              description: description.trim(),
-              category,
-              modality,
-              budget_min: budgetMin ? Number(budgetMin) : null,
-              budget_max: budgetMax ? Number(budgetMax) : null,
-              deadline: deadline || null,
-              skills,
-              status: "pausado",
-            });
-          error = retryPausado.error;
-        } else {
-          error = retry.error;
+        if (submitError) {
+          console.error("Error enviando a validación:", submitError);
+          setErrorMessage(
+            `El proyecto se guardó como borrador, pero no pudo enviarse a validación: ${submitError.message}`
+          );
+          setLoading(false);
+          return;
         }
       }
 

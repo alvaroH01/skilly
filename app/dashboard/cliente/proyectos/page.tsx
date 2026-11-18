@@ -126,8 +126,7 @@ export default async function MisProyectosPage() {
 
             {projects.map((project) => {
               const isPending =
-                project.status === "pendiente_validacion" ||
-                project.status === "en_revision";
+                project.status === "borrador";
 
               return (
                 <article
