@@ -2850,7 +2850,7 @@ export default async function AdminDashboardPage() {
 
                     {proposals.map(
 
-                      (proposal: any) => {
+                      (proposal) => {
 
 
 

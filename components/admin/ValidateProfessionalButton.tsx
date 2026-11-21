@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   professionalId: string;
   professionalName: string;
@@ -48,9 +49,9 @@ export default function ValidateProfessionalButton({
         setFeedback("");
         router.refresh();
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error actualizando validación:", err);
-      setFeedback(err?.message || "No se pudo actualizar la validación.");
+      setFeedback(errorMessage(err, "No se pudo actualizar la validación."));
     } finally {
       setLoading(false);
     }

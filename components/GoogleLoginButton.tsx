@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage as getErrorMessage } from "@/utils/services";
 export default function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -31,9 +32,9 @@ export default function GoogleLoginButton() {
       } else if (data?.url) {
         window.location.href = data.url;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error inesperado con Google:", err);
-      setErrorMessage(err?.message || "No se pudo conectar con el servicio de autenticación.");
+      setErrorMessage(getErrorMessage(err, "No se pudo conectar con el servicio de autenticación."));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { createClient } from "@/utils/supabase/server";
 
+/**
+ * POST /api/payments/create
+ *
+ * Crea la orden de pago de una asignación (propuesta) y le asigna un token de
+ * pago. Solo la puede invocar un administrador de Skilly: el rol se comprueba
+ * en el servidor con la sesión y la tabla `profiles`, nunca con datos enviados
+ * por el navegador.
+ *
+ * Pasos: (1) validar sesión, (2) validar rol admin, (3) leer `proposalId`,
+ * (4) crear la orden con la función `create_payment_order`, (5-7) generar un
+ * token aleatorio de 32 bytes, su hash SHA-256 y la expiración de 24 horas,
+ * (8) guardar solo el hash con `set_payment_order_token` y (9-10) responder
+ * con la URL de pago.
+ *
+ * Cuerpo esperado: `{ "proposalId": string }`.
+ * Respuestas: 200 orden creada · 400 identificador faltante o rechazo de la
+ * función de base de datos · 401 sin sesión · 403 el usuario no es
+ * administrador · 500 error inesperado.
+ */
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();

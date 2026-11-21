@@ -10,6 +10,11 @@ import { createClient } from "@/utils/supabase/server";
  * (vigencia 24 horas) mediante la función issue_payment_link y se entrega la
  * URL /pago/<token> únicamente a quien tiene la sesión de esa cuenta.
  * Cada llamada invalida el enlace anterior.
+ *
+ * Cuerpo esperado: `{ "orderId": string }`.
+ * Respuestas: 200 `{ success, paymentUrl, expiresAt }` · 400 identificador
+ * faltante o rechazo de la función de base de datos · 401 sin sesión ·
+ * 500 error inesperado.
  */
 export async function POST(request: Request) {
   try {

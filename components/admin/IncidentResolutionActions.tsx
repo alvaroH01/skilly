@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   projectId: string;
   projectTitle: string;
@@ -84,11 +85,11 @@ export default function IncidentResolutionActions({
         setResolutionNotes("");
         router.refresh();
       }, 1800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error en mediación:", err);
       setFeedbackMsg({
         type: "error",
-        text: err?.message || "No se pudo actualizar el estado de mediación.",
+        text: errorMessage(err, "No se pudo actualizar el estado de mediación."),
       });
     } finally {
       setLoading(false);

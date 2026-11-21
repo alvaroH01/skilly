@@ -33,7 +33,15 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-/** Algoritmo de Luhn: valida el dígito verificador de un número de tarjeta. */
+/**
+ * Valida el dígito verificador de un número de tarjeta con el algoritmo de Luhn.
+ *
+ * @param number - Número de tarjeta con solo dígitos (de 13 a 19).
+ * @returns `true` si el formato y el dígito verificador son correctos.
+ * @example
+ * luhnValid("4051885600446623"); // true
+ * luhnValid("4051885600446624"); // false
+ */
 export function luhnValid(number: string): boolean {
   if (!/^\d{13,19}$/.test(number)) return false;
   let sum = 0;
@@ -50,7 +58,12 @@ export function luhnValid(number: string): boolean {
   return sum % 10 === 0;
 }
 
-/** Da formato visual al número: grupos de 4 (American Express: 4-6-5). */
+/**
+ * Da formato visual al número mientras el usuario escribe.
+ *
+ * @param value - Texto ingresado; se ignoran los caracteres que no son dígitos.
+ * @returns Grupos de 4 dígitos, o 4-6-5 si empieza con 34 o 37 (American Express).
+ */
 export function formatCardNumber(value: string): string {
   const d = digitsOnly(value).slice(0, 19);
   if (/^3[47]/.test(d)) {
@@ -65,7 +78,13 @@ export function formatExpiry(value: string): string {
   return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
 }
 
-/** Comprueba que la fecha MM/AA sea válida y del mes actual o posterior. */
+/**
+ * Comprueba que la fecha MM/AA sea válida y del mes actual o posterior.
+ *
+ * @param value - Fecha en formato `MM/AA`.
+ * @param now - Fecha de referencia; se puede inyectar para probar sin depender del reloj.
+ * @returns `true` si el mes está entre 01 y 12 y la tarjeta aún no vence.
+ */
 export function isFutureExpiry(value: string, now: Date = new Date()): boolean {
   const match = /^(\d{2})\/(\d{2})$/.exec(value.trim());
   if (!match) return false;
@@ -94,6 +113,15 @@ export type CardEvaluation =
  * Orden de las reglas: formato (Luhn), tarjeta de demostración, tipo
  * (crédito/débito), vencimiento y CVV (solo crédito) y, al final, el resultado
  * que simula el emisor (aprobada o rechazada).
+ *
+ * @param input - Número, vencimiento, CVV y tipo de tarjeta ingresados en el checkout.
+ * @returns Un resultado discriminado por `ok`: si es `true`, trae la tarjeta y sus
+ *   últimos 4 dígitos; si es `false`, trae el código HTTP sugerido (422 por datos
+ *   inválidos, 402 por rechazo del emisor) y el mensaje para el usuario.
+ * @remarks Nunca lanza excepciones ni guarda el número de tarjeta.
+ * @example
+ * evaluateDemoCard({ number: "4051 8856 0044 6623", expiry: "12/30", cvv: "123", kind: "credito" });
+ * // { ok: true, card: {...}, last4: "6623" }
  */
 export function evaluateDemoCard(input: CardInput): CardEvaluation {
   const number = digitsOnly(input.number);

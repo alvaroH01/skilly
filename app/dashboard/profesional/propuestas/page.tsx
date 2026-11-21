@@ -161,19 +161,6 @@ export default async function MisPropuestasPage() {
                 : proposal.project;
 
               const hasCuration = proposal.message?.includes("RETROALIMENTACIÓN DE SKILLY LATAM");
-              let suggestedAmountNumber: number | null = null;
-              let curationNotes = "";
-
-              if (hasCuration) {
-                const match = proposal.message.match(/Tarifa recomendada por Skilly: \$([0-9\.]+)/);
-                if (match && match[1]) {
-                  suggestedAmountNumber = Number(match[1].replace(/\./g, ""));
-                }
-                const notesMatch = proposal.message.match(/Observaciones del equipo: ([\s\S]*?)(?:\n|━|$)/);
-                if (notesMatch && notesMatch[1]) {
-                  curationNotes = notesMatch[1].trim();
-                }
-              }
 
               // Separamos el mensaje base del profesional de la nota de Skilly para presentarlo limpio
               const displayMessage = proposal.message?.split("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")[0].trim();

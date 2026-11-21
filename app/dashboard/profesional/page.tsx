@@ -9,27 +9,11 @@ import ScheduleInterviewModal from "@/components/professional/ScheduleInterviewM
    TIPOS
 ====================================================== */
 
-type ProfessionalDashboardPageProps = {
-  searchParams: Promise<{
-    q?: string;
-  }>;
-};
+;
 
 /* ======================================================
    FUNCIONES
 ====================================================== */
-
-function formatMoney(value: number | null) {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function formatRelativeDate(value: string) {
   const date = new Date(value);
@@ -170,24 +154,6 @@ function GridIcon({ className = "h-5 w-5" }: IconProps) {
       <rect x="14" y="4" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
       <rect x="4" y="14" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
       <rect x="14" y="14" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
-  );
-}
-
-function FolderIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M3.5 7.5C3.5 6.7 4.2 6 5 6H9L11 8H19C19.8 8 20.5 8.7 20.5 9.5V18C20.5 18.8 19.8 19.5 19 19.5H5C4.2 19.5 3.5 18.8 3.5 18V7.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }
@@ -350,10 +316,7 @@ function BriefcaseIcon({ className = "h-5 w-5" }: IconProps) {
    DASHBOARD PROFESIONAL
 ====================================================== */
 
-export default async function ProfessionalDashboardPage({
-  searchParams,
-}: ProfessionalDashboardPageProps) {
-  const params = await searchParams;
+export default async function ProfessionalDashboardPage() {
 
   const supabase = await createClient();
 
@@ -564,12 +527,6 @@ export default async function ProfessionalDashboardPage({
     allProposals.filter(
       (proposal) =>
         proposal.status === "pendiente"
-    ).length;
-
-  const acceptedProposals =
-    allProposals.filter(
-      (proposal) =>
-        proposal.status === "aceptada"
     ).length;
 
   /* ====================================================

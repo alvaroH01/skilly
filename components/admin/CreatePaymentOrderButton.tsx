@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   proposalId: string;
 };
@@ -62,15 +63,14 @@ export default function CreatePaymentOrderButton({
        * oculta este botón (condición !order) y la ventana con el enlace
        * desaparecería a los pocos segundos. La recarga se hace en closeModal().
        */
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Error generando orden de pago:",
         err
       );
 
       setError(
-        err?.message ||
-          "No pudimos generar la orden de pago."
+        errorMessage(err, "No pudimos generar la orden de pago.")
       );
     } finally {
       setLoading(false);

@@ -61,6 +61,20 @@ function statusLabel(status: string) {
    PAGE
 ====================================================== */
 
+/** Propuesta con su contratación y su profesional, tal como la consulta esta pantalla. */
+type ProposalRow = {
+  id: string;
+  project_id: string;
+  professional_id: string;
+  message: string | null;
+  proposed_amount: number | null;
+  estimated_days: number | null;
+  status: string;
+  created_at: string;
+  project: { id: string; title: string; status: string } | null;
+  professional: { id: string; full_name: string | null; avatar_url: string | null } | null;
+};
+
 export default async function PropuestasClientePage() {
   const supabase = await createClient();
 
@@ -104,7 +118,7 @@ export default async function PropuestasClientePage() {
      PROPUESTAS
   ==================================================== */
 
-  let proposals: any[] = [];
+  let proposals: ProposalRow[] = [];
 
   if (projectIds.length > 0) {
     const {
@@ -152,8 +166,9 @@ export default async function PropuestasClientePage() {
       );
     }
 
-    proposals =
-      data ?? [];
+    // PostgREST devuelve un objeto (no una lista) en las relaciones muchos-a-uno;
+    // el tipo inferido por el cliente sin esquema las marca como lista, por eso el cast.
+    proposals = (data ?? []) as unknown as ProposalRow[];
   }
 
   /* ====================================================

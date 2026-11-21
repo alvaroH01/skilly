@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   projectId: string;
   projectTitle: string;
@@ -69,9 +70,9 @@ export default function PrivateEvaluationModal({
       }, 2000);
 
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error enviando evaluación privada:", err);
-      setError(err?.message || "No se pudo registrar la evaluación.");
+      setError(errorMessage(err, "No se pudo registrar la evaluación."));
     } finally {
       setLoading(false);
     }

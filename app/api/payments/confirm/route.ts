@@ -18,6 +18,12 @@ import { evaluateDemoCard, type CardKind } from "@/utils/payments/demoCards";
  * aprobada se invoca mark_payment_paid; una tarjeta rechazada no consume el
  * enlace de pago. El número de tarjeta nunca se guarda ni se escribe en logs.
  * En producción, esta ruta debe llamar a Transbank y confirmar con el proveedor.
+ *
+ * Cuerpo esperado: `{ token, card: { number, expiry, cvv, kind }, installments? }`.
+ * Respuestas: 200 pago confirmado · 400 token inválido o error de la función ·
+ * 401 sin sesión · 402 tarjeta rechazada por el emisor · 403 la cuenta no es la
+ * del cliente de la orden · 410 enlace vencido o ya usado · 422 datos de tarjeta
+ * inválidos · 500 error inesperado.
  */
 export async function POST(request: Request) {
   try {

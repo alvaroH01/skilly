@@ -22,6 +22,15 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+/** Orden de pago asociada a una propuesta (columnas que lee esta pantalla). */
+type PaymentOrderRow = {
+  id: string;
+  proposal_id: string;
+  amount: number;
+  status: string;
+  created_at: string;
+};
+
 export default async function AdminProposalsPage() {
   const supabase = await createClient();
 
@@ -105,7 +114,7 @@ export default async function AdminProposalsPage() {
   const professionalIds = [
     ...new Set(
       proposals
-        .map((proposal: any) => proposal.professional_id)
+        .map((proposal) => proposal.professional_id)
         .filter(Boolean)
     ),
   ];
@@ -113,7 +122,7 @@ export default async function AdminProposalsPage() {
   const clientIds = [
     ...new Set(
       proposals
-        .map((proposal: any) => {
+        .map((proposal) => {
           const project = Array.isArray(proposal.projects)
             ? proposal.projects[0]
             : proposal.projects;
@@ -140,7 +149,7 @@ export default async function AdminProposalsPage() {
       .in("id", profileIds);
 
     names = new Map(
-      (people ?? []).map((person: any) => [
+      (people ?? []).map((person) => [
         person.id,
         person.full_name || "Usuario Skilly",
       ])
@@ -152,10 +161,10 @@ export default async function AdminProposalsPage() {
   ===================================================== */
 
   const proposalIds = proposals.map(
-    (proposal: any) => proposal.id
+    (proposal) => proposal.id
   );
 
-  let paymentOrders = new Map<string, any>();
+  let paymentOrders = new Map<string, PaymentOrderRow>();
 
   if (proposalIds.length > 0) {
     const { data: orders } = await supabase
@@ -170,7 +179,7 @@ export default async function AdminProposalsPage() {
       .in("proposal_id", proposalIds);
 
     paymentOrders = new Map(
-      (orders ?? []).map((order: any) => [
+      (orders ?? []).map((order) => [
         order.proposal_id,
         order,
       ])
@@ -287,7 +296,7 @@ export default async function AdminProposalsPage() {
             </div>
           ) : (
             <div className="space-y-5">
-              {proposals.map((proposal: any) => {
+              {proposals.map((proposal) => {
                 const project = Array.isArray(
                   proposal.projects
                 )
@@ -305,8 +314,6 @@ export default async function AdminProposalsPage() {
                 const clientName =
                   names.get(project?.client_id) ||
                   "Contratador";
-
-                const hasCuration = proposal.message?.includes("RETROALIMENTACIÓN DE SKILLY LATAM");
 
                 return (
                   <article

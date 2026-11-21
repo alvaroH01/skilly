@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   professionalName?: string;
 };
@@ -24,7 +25,7 @@ export default function ScheduleInterviewModal({
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(designatedSlots[0]);
   const [loading, setLoading] = useState(false);
-  const [confirmedData, setConfirmedData] = useState<any>(null);
+  const [confirmedData, setConfirmedData] = useState<{ date: string; slot: string; meetLink: string } | null>(null);
   const [error, setError] = useState("");
 
   async function handleConfirmSchedule(e: React.FormEvent) {
@@ -65,9 +66,9 @@ export default function ScheduleInterviewModal({
       });
 
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error agendando entrevista:", err);
-      setError(err?.message || "No se pudo agendar la entrevista.");
+      setError(errorMessage(err, "No se pudo agendar la entrevista."));
     } finally {
       setLoading(false);
     }
