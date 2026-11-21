@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 /* ======================================================
    TIPOS
 ====================================================== */
@@ -186,15 +187,14 @@ export default function ProfessionalSettingsForm({
       );
 
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         "Error guardando preferencias:",
         error
       );
 
       setPreferencesMessage(
-        error?.message ||
-          "No pudimos guardar los cambios."
+        errorMessage(error, "No pudimos guardar los cambios.")
       );
 
       setPreferencesMessageType(
@@ -355,15 +355,14 @@ export default function ProfessionalSettingsForm({
       setPasswordMessageType(
         "success"
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(
         "Error cambiando contraseña:",
         error
       );
 
       setPasswordMessage(
-        error?.message ||
-          "No pudimos actualizar tu contraseña."
+        errorMessage(error, "No pudimos actualizar tu contraseña.")
       );
 
       setPasswordMessageType(

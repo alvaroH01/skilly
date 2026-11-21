@@ -248,15 +248,15 @@ export default async function ProfessionalNotificationsPage() {
 
               <p className="mt-2 max-w-md text-sm leading-6 text-[#858a99]">
                 Aquí aparecerán las novedades sobre tus
-                propuestas, mensajes y otras actividades
+                servicios, contrataciones y otras actividades
                 importantes dentro de Skilly.
               </p>
 
               <Link
-                href="/dashboard/profesional/proyectos"
+                href="/dashboard/profesional/servicios"
                 className="mt-6 rounded-2xl bg-[#6f4cf6] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(111,76,246,0.18)] transition hover:bg-[#6241e8]"
               >
-                Explorar proyectos →
+                Gestionar mis servicios →
               </Link>
 
             </section>

@@ -229,7 +229,7 @@ export default function RegistroPage() {
                     </p>
 
                     <p className="text-sm text-[#818696]">
-                      Profesional o cliente
+                      Profesional o contratador
                     </p>
 
                     <span className="mt-2 inline-flex rounded-full bg-[#e6f7ee] px-2.5 py-1 text-xs font-semibold text-[#3d9a6c]">

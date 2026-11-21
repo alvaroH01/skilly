@@ -9,27 +9,11 @@ import ScheduleInterviewModal from "@/components/professional/ScheduleInterviewM
    TIPOS
 ====================================================== */
 
-type ProfessionalDashboardPageProps = {
-  searchParams: Promise<{
-    q?: string;
-  }>;
-};
+;
 
 /* ======================================================
    FUNCIONES
 ====================================================== */
-
-function formatMoney(value: number | null) {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  return new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function formatRelativeDate(value: string) {
   const date = new Date(value);
@@ -170,24 +154,6 @@ function GridIcon({ className = "h-5 w-5" }: IconProps) {
       <rect x="14" y="4" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
       <rect x="4" y="14" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
       <rect x="14" y="14" width="6" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
-  );
-}
-
-function FolderIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M3.5 7.5C3.5 6.7 4.2 6 5 6H9L11 8H19C19.8 8 20.5 8.7 20.5 9.5V18C20.5 18.8 19.8 19.5 19 19.5H5C4.2 19.5 3.5 18.8 3.5 18V7.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
     </svg>
   );
 }
@@ -350,13 +316,7 @@ function BriefcaseIcon({ className = "h-5 w-5" }: IconProps) {
    DASHBOARD PROFESIONAL
 ====================================================== */
 
-export default async function ProfessionalDashboardPage({
-  searchParams,
-}: ProfessionalDashboardPageProps) {
-  const params = await searchParams;
-
-  const searchTerm = params.q?.trim() ?? "";
-  const safeSearch = searchTerm.replace(/[,%()]/g, " ").trim();
+export default async function ProfessionalDashboardPage() {
 
   const supabase = await createClient();
 
@@ -569,56 +529,45 @@ export default async function ProfessionalDashboardPage({
         proposal.status === "pendiente"
     ).length;
 
-  const acceptedProposals =
-    allProposals.filter(
-      (proposal) =>
-        proposal.status === "aceptada"
-    ).length;
-
   /* ====================================================
-     PROYECTOS DISPONIBLES
+     MIS SERVICIOS
   ==================================================== */
 
-  let projectsQuery = supabase
-    .from("projects")
-    .select(`
-      id,
-      title,
-      description,
-      category,
-      modality,
-      budget_min,
-      budget_max,
-      skills,
-      created_at
-    `)
-    .eq("status", "activo");
-
-  if (safeSearch) {
-    projectsQuery = projectsQuery.or(
-      `title.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%,category.ilike.%${safeSearch}%`
-    );
-  }
-
   const {
-    data: availableProjects,
-    error: projectsError,
-  } = await projectsQuery.order(
-    "created_at",
-    {
-      ascending: false,
-    }
-  );
+    data: myServices,
+    error: servicesError,
+  } = await supabase
+    .from("services")
+    .select("id, status, validation_status")
+    .eq("professional_id", user.id);
 
-  if (projectsError) {
+  if (servicesError) {
     console.error(
-      "Error cargando proyectos:",
-      projectsError.message
+      "Error cargando servicios:",
+      servicesError.message
     );
   }
 
-  const projects =
-    availableProjects ?? [];
+  const services = myServices ?? [];
+
+  const publishedServices = services.filter(
+    (service) =>
+      service.validation_status === "validado" &&
+      service.status === "activo"
+  ).length;
+
+  const servicesInReview = services.filter((service) =>
+    [
+      "pendiente",
+      "en_revision",
+      "cambios_solicitados",
+      "propuesta_final",
+    ].includes(service.validation_status)
+  ).length;
+
+  const paidHirings = allProposals.filter(
+    (proposal) => proposal.status === "confirmada"
+  ).length;
 
   /* ====================================================
      DATOS PARA LA VISTA
@@ -626,37 +575,34 @@ export default async function ProfessionalDashboardPage({
 
   const stats = [
     {
+      value: String(publishedServices),
+      label: "Servicios publicados",
+      href: "/dashboard/profesional/servicios",
+      tone: "purple",
+      icon: <BriefcaseIcon className="h-6 w-6" />,
+    },
+    {
+      value: String(servicesInReview),
+      label: "En revisión de Skilly",
+      href: "/dashboard/profesional/servicios",
+      tone: "orange",
+      icon: <ClockIcon className="h-6 w-6" />,
+    },
+    {
       value: String(allProposals.length),
-      label: "Propuestas enviadas",
+      label: "Contrataciones",
       href: "/dashboard/profesional/propuestas",
       tone: "purple",
       icon: <SendIcon className="h-6 w-6" />,
     },
     {
-      value: String(pendingProposals),
-      label: "Pendientes",
-      href: "/dashboard/profesional/propuestas",
-      tone: "orange",
-      icon: <ClockIcon className="h-6 w-6" />,
-    },
-    {
-      value: String(acceptedProposals),
-      label: "Aceptadas",
+      value: String(paidHirings),
+      label: "Pagadas",
       href: "/dashboard/profesional/propuestas",
       tone: "green",
       icon: <CheckIcon className="h-6 w-6" />,
     },
-    {
-      value: String(projects.length),
-      label: "Proyectos disponibles",
-      href: "/dashboard/profesional/proyectos",
-      tone: "purple",
-      icon: <BriefcaseIcon className="h-6 w-6" />,
-    },
   ];
-
-  const recommendedProjects =
-    projects.slice(0, 3);
 
   const recentProposals =
     allProposals.slice(0, 4);
@@ -721,20 +667,12 @@ export default async function ProfessionalDashboardPage({
               </Link>
 
               <Link
-                href="/dashboard/profesional/proyectos"
-                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[#5e6476] transition hover:bg-[#f8f8fc] hover:text-[#6848ef]"
-              >
-                <FolderIcon />
-                Proyectos
-              </Link>
-
-              <Link
                 href="/dashboard/profesional/propuestas"
                 className="flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium text-[#5e6476] transition hover:bg-[#f8f8fc] hover:text-[#6848ef]"
               >
                 <div className="flex items-center gap-3">
                   <SendIcon />
-                  Propuestas
+                  Contrataciones
                 </div>
 
                 {pendingProposals > 0 && (
@@ -820,7 +758,7 @@ export default async function ProfessionalDashboardPage({
 
             {/* BUSCADOR */}
             <form
-              action="/dashboard/profesional"
+              action="/buscar"
               method="GET"
               className="relative w-full max-w-[600px]"
             >
@@ -831,8 +769,7 @@ export default async function ProfessionalDashboardPage({
               <input
                 type="search"
                 name="q"
-                defaultValue={searchTerm}
-                placeholder="Buscar proyectos o habilidades..."
+                placeholder="Buscar servicios en el catálogo..."
                 className="w-full rounded-2xl border border-[#e0e1ea] bg-[#fbfbfd] py-3 pl-11 pr-4 text-sm text-[#30364a] outline-none transition placeholder:text-[#a0a4b0] focus:border-[#aa9aff] focus:bg-white focus:ring-4 focus:ring-[#6f4cf6]/10"
               />
             </form>
@@ -890,16 +827,16 @@ export default async function ProfessionalDashboardPage({
                 </p>
 
                 <p className="mt-3 max-w-[560px] text-sm leading-6 text-[#73798a]">
-                  Explora proyectos que se ajustan a tu experiencia y conecta con
-                  organizaciones que necesitan tus habilidades.
+                  Publica tus servicios en el catálogo de Skilly y recibe
+                  contrataciones de organizaciones que necesitan tus habilidades.
                 </p>
 
                 <div className="mt-5 flex flex-wrap items-center gap-3">
                   <Link
-                    href="/dashboard/profesional/proyectos"
+                    href="/dashboard/profesional/servicios"
                     className="inline-flex items-center rounded-2xl bg-[#6f4cf6] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,76,246,0.24)] transition hover:-translate-y-0.5 hover:bg-[#6241e8]"
                   >
-                    Explorar proyectos →
+                    Gestionar mis servicios →
                   </Link>
 
                   <ScheduleInterviewModal professionalName={displayName} />
@@ -993,152 +930,29 @@ export default async function ProfessionalDashboardPage({
             </section>
 
             {/* ==================================================
-                OPORTUNIDADES
+                MIS SERVICIOS
             =================================================== */}
 
-            <section className="mt-5 rounded-[24px] border border-[#e9e9f1] bg-white p-5">
-
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                <div>
-                  <h2 className="text-xl font-semibold text-[#20273b]">
-                    {searchTerm
-                      ? `Resultados para “${searchTerm}”`
-                      : "Oportunidades para ti"}
-                  </h2>
-
-                  <p className="mt-1 text-xs text-[#9195a3]">
-                    {searchTerm
-                      ? "Proyectos activos que coinciden con tu búsqueda."
-                      : "Últimos proyectos publicados que podrían interesarte."}
-                  </p>
-                </div>
-
+            <section className="mt-5 rounded-[24px] border border-[#e9e9f1] bg-white p-6">
+              <h2 className="text-xl font-semibold text-[#20273b]">Tu catálogo de servicios</h2>
+              <p className="mt-1 max-w-[620px] text-sm leading-6 text-[#8b8f9d]">
+                Crea un servicio, envíalo a revisión de Skilly y, cuando aceptes la propuesta final, quedará
+                visible para las organizaciones que buscan talento.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href="/dashboard/profesional/proyectos"
-                  className="text-sm font-semibold text-[#6f4cf6] transition hover:text-[#5d3fe0]"
+                  href="/dashboard/profesional/servicios/nuevo"
+                  className="rounded-xl bg-[#6f4cf6] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6241e8]"
                 >
-                  Ver todos los proyectos →
+                  + Nuevo servicio
                 </Link>
-
+                <Link
+                  href="/dashboard/profesional/servicios"
+                  className="rounded-xl border border-[#d8d1ff] px-5 py-3 text-sm font-semibold text-[#6f4cf6] transition hover:bg-[#f8f6ff]"
+                >
+                  Ver mis servicios
+                </Link>
               </div>
-
-              {recommendedProjects.length === 0 ? (
-                <div className="rounded-[20px] border border-dashed border-[#dcd9e8] bg-[#fbfbfd] px-6 py-12 text-center">
-
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eeeaff] text-[#6f4cf6]">
-                    <BriefcaseIcon className="h-6 w-6" />
-                  </div>
-
-                  <p className="mt-4 font-semibold text-[#292f43]">
-                    {searchTerm
-                      ? "No encontramos proyectos con esa búsqueda"
-                      : "No hay proyectos disponibles"}
-                  </p>
-
-                  <p className="mt-2 text-sm text-[#858a99]">
-                    {searchTerm
-                      ? "Prueba con otra palabra o habilidad."
-                      : "Cuando un cliente publique una nueva oportunidad aparecerá aquí."}
-                  </p>
-
-                  {searchTerm && (
-                    <Link
-                      href="/dashboard/profesional"
-                      className="mt-4 inline-flex text-sm font-semibold text-[#6f4cf6]"
-                    >
-                      Limpiar búsqueda
-                    </Link>
-                  )}
-
-                </div>
-              ) : (
-                <div className="divide-y divide-[#eeeeF4]">
-
-                  {recommendedProjects.map((project) => (
-                    <div
-                      key={project.id}
-                      className="group flex flex-col gap-4 py-4 first:pt-1 last:pb-1 lg:flex-row lg:items-center"
-                    >
-
-                      <div className="flex min-w-0 flex-1 items-start gap-4">
-
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f0edff] text-[#6f4cf6]">
-                          <BriefcaseIcon className="h-5 w-5" />
-                        </div>
-
-                        <div className="min-w-0">
-
-                          <p className="font-semibold text-[#252b40]">
-                            {project.title}
-                          </p>
-
-                          {project.description && (
-                            <p className="mt-1 line-clamp-1 max-w-[520px] text-xs text-[#8b8f9d]">
-                              {project.description}
-                            </p>
-                          )}
-
-                        </div>
-
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 lg:w-[360px]">
-
-                        <span className="rounded-full bg-[#f2eeff] px-3 py-1.5 text-xs font-medium text-[#6f4cf6]">
-                          {project.category}
-                        </span>
-
-                        <span className="rounded-full bg-[#f5f5f8] px-3 py-1.5 text-xs capitalize text-[#777c8b]">
-                          {project.modality}
-                        </span>
-
-                        {(project.budget_min ||
-                          project.budget_max) && (
-                          <span className="rounded-full bg-[#eaf8f0] px-3 py-1.5 text-xs font-medium text-[#288762]">
-
-                            {project.budget_min &&
-                              formatMoney(
-                                project.budget_min
-                              )}
-
-                            {project.budget_min &&
-                              project.budget_max &&
-                              " - "}
-
-                            {project.budget_max &&
-                              formatMoney(
-                                project.budget_max
-                              )}
-
-                          </span>
-                        )}
-
-                      </div>
-
-                      <div className="flex shrink-0 items-center justify-between gap-4 lg:w-[230px] lg:justify-end">
-
-                        <p className="text-xs text-[#969aaa]">
-                          {formatRelativeDate(
-                            project.created_at
-                          )}
-                        </p>
-
-                        <Link
-                          href={`/dashboard/profesional/proyectos/${project.id}`}
-                          className="rounded-xl border border-[#d8d1ff] px-4 py-2.5 text-xs font-semibold text-[#6f4cf6] transition hover:bg-[#f8f6ff]"
-                        >
-                          Ver proyecto
-                        </Link>
-
-                      </div>
-
-                    </div>
-                  ))}
-
-                </div>
-              )}
-
             </section>
 
             {/* ==================================================

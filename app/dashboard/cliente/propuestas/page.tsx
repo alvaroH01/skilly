@@ -1,8 +1,8 @@
 import Link from "next/link";
+import PayNowButton from "@/components/client/PayNowButton";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-import ProposalActions from "@/components/client/ProposalActions";
 
 /* ======================================================
    FORMATEAR DINERO
@@ -24,15 +24,14 @@ function money(value: number | null) {
 
 function statusStyle(status: string) {
   switch (status) {
-    case "aceptada":
+    case "confirmada":
       return "bg-[#e8f7ef] text-[#27855f]";
-
+    case "pendiente_pago":
+      return "bg-[#efe9ff] text-[#6543dc]";
     case "rechazada":
       return "bg-[#fff0ed] text-[#c96351]";
-
     case "retirada":
       return "bg-[#f1f1f4] text-[#747986]";
-
     default:
       return "bg-[#fff5dd] text-[#a9762d]";
   }
@@ -41,26 +40,40 @@ function statusStyle(status: string) {
 /* ======================================================
    TEXTO DE ESTADO
 ====================================================== */
-
 function statusLabel(status: string) {
   switch (status) {
-    case "aceptada":
-      return "Aceptada";
-
+    case "seleccionada":
+      return "Esperando orden de pago";
+    case "pendiente_pago":
+      return "Pago pendiente";
+    case "confirmada":
+      return "Pagado · en ejecución";
     case "rechazada":
       return "Rechazada";
-
     case "retirada":
       return "Retirada";
-
     default:
-      return "Pendiente";
+      return "En proceso";
   }
 }
 
 /* ======================================================
    PAGE
 ====================================================== */
+
+/** Propuesta con su contratación y su profesional, tal como la consulta esta pantalla. */
+type ProposalRow = {
+  id: string;
+  project_id: string;
+  professional_id: string;
+  message: string | null;
+  proposed_amount: number | null;
+  estimated_days: number | null;
+  status: string;
+  created_at: string;
+  project: { id: string; title: string; status: string } | null;
+  professional: { id: string; full_name: string | null; avatar_url: string | null } | null;
+};
 
 export default async function PropuestasClientePage() {
   const supabase = await createClient();
@@ -105,7 +118,7 @@ export default async function PropuestasClientePage() {
      PROPUESTAS
   ==================================================== */
 
-  let proposals: any[] = [];
+  let proposals: ProposalRow[] = [];
 
   if (projectIds.length > 0) {
     const {
@@ -153,8 +166,32 @@ export default async function PropuestasClientePage() {
       );
     }
 
-    proposals =
-      data ?? [];
+    // PostgREST devuelve un objeto (no una lista) en las relaciones muchos-a-uno;
+    // el tipo inferido por el cliente sin esquema las marca como lista, por eso el cast.
+    proposals = (data ?? []) as unknown as ProposalRow[];
+  }
+
+  /* ====================================================
+     ÓRDENES DE PAGO (para el botón "Pagar ahora")
+  ==================================================== */
+
+  const orderByProposal = new Map<
+    string,
+    { id: string; status: string; amount: number }
+  >();
+
+  if (proposals.length > 0) {
+    const { data: orders } = await supabase
+      .from("payment_orders")
+      .select("id, proposal_id, status, amount")
+      .in(
+        "proposal_id",
+        proposals.map((proposal) => proposal.id)
+      );
+
+    (orders ?? []).forEach((order) =>
+      orderByProposal.set(order.proposal_id, order)
+    );
   }
 
   /* ======================================================
@@ -175,16 +212,16 @@ export default async function PropuestasClientePage() {
           <div>
 
             <p className="text-sm font-semibold text-[#7458e8]">
-              Proyectos
+              Contrataciones
             </p>
 
             <h1 className="mt-1 text-3xl font-semibold text-[#20263a]">
-              Propuestas recibidas
+              Estado de mis contrataciones
             </h1>
 
             <p className="mt-2 text-sm text-[#7c8190]">
-              Revisa los profesionales interesados en tus
-              proyectos.
+              Revisa los servicios que contrataste y el estado
+              de su pago.
             </p>
 
           </div>
@@ -210,20 +247,19 @@ export default async function PropuestasClientePage() {
             </div>
 
             <h2 className="mt-5 text-xl font-semibold text-[#272d42]">
-              Aún no tienes propuestas
+              Aún no tienes contrataciones
             </h2>
 
             <p className="mt-2 max-w-md px-5 text-sm leading-6 text-[#858a99]">
-              Cuando un profesional se interese en alguno
-              de tus proyectos, su propuesta aparecerá
-              aquí.
+              Cuando contrates un servicio del catálogo,
+              aparecerá aquí con el estado de su pago.
             </p>
 
             <Link
-              href="/dashboard/cliente/proyectos"
+              href="/buscar"
               className="mt-6 rounded-xl border border-[#d8d1ff] px-5 py-3 text-sm font-semibold text-[#6848ef] transition hover:bg-[#f7f5ff]"
             >
-              Ver mis proyectos
+              Explorar servicios
             </Link>
 
           </section>
@@ -248,13 +284,16 @@ export default async function PropuestasClientePage() {
                     .charAt(0)
                     .toUpperCase();
 
-                const isPending =
-                  proposal.status ===
-                  "pendiente";
+                const isAccepted = [
+                  "seleccionada",
+                  "pendiente_pago",
+                  "confirmada",
+                ].includes(proposal.status);
 
-                const isAccepted =
-                  proposal.status ===
-                  "aceptada";
+                const order = orderByProposal.get(proposal.id);
+                const canPay =
+                  !!order &&
+                  ["pendiente", "enviado"].includes(order.status);
 
                 return (
                   <article
@@ -371,13 +410,13 @@ export default async function PropuestasClientePage() {
                           <div className="mt-5 rounded-2xl border border-[#ccebd9] bg-[#edf9f2] px-4 py-3">
 
                             <p className="text-sm font-semibold text-[#287b59]">
-                              ✓ Propuesta seleccionada
+                              ✓ Servicio contratado
                             </p>
 
                             <p className="mt-1 text-xs leading-5 text-[#5d806f]">
-                              Este profesional fue
-                              seleccionado para realizar
-                              el proyecto.
+                              Skilly gestiona la orden de pago
+                              y te avisará cuando esté
+                              lista para pagar.
                             </p>
 
                           </div>
@@ -391,39 +430,17 @@ export default async function PropuestasClientePage() {
 
                       <div className="flex shrink-0 flex-col gap-2">
 
-                        {/* SOLO PENDIENTES PUEDEN DECIDIRSE */}
-
-                        {isPending && (
-                          <ProposalActions
-                            proposalId={
-                              proposal.id
-                            }
-                            projectId={
-                              proposal.project_id
-                            }
-                            professionalName={
-                              name
-                            }
-                            projectTitle={
-                              proposal
-                                .project
-                                ?.title ??
-                              "Proyecto"
-                            }
-                            amount={
-                              proposal
-                                .proposed_amount
-                            }
-                            estimatedDays={
-                              proposal
-                                .estimated_days
-                            }
+                        {/* PAGO: el contratador obtiene su propio enlace */}
+                        {canPay && order && (
+                          <PayNowButton
+                            orderId={order.id}
+                            amount={order.amount}
                           />
                         )}
 
                         {/* ESTADO FINAL */}
 
-                        {!isPending && (
+                        {(
                           <div
                             className={`rounded-xl px-5 py-2.5 text-center text-sm font-semibold ${
                               isAccepted
@@ -435,19 +452,6 @@ export default async function PropuestasClientePage() {
                               proposal.status
                             )}
                           </div>
-                        )}
-
-                        {/* PERFIL */}
-
-                        {proposal
-                          .professional
-                          ?.id && (
-                          <Link
-                            href={`/dashboard/cliente/profesionales/${proposal.professional.id}`}
-                            className="rounded-xl border border-[#d8d1ff] px-5 py-2.5 text-center text-sm font-semibold text-[#6848ef] transition hover:bg-[#f7f5ff]"
-                          >
-                            Ver perfil
-                          </Link>
                         )}
 
                       </div>

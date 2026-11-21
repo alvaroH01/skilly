@@ -4,6 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+/**
+ * Botón de cierre de sesión del panel de administración.
+ *
+ * Llama a supabase.auth.signOut() y refresca la ruta para que las páginas de servidor vuelvan a validar la sesión.
+ *
+ * @returns Botón con estado de carga y mensaje de error.
+ */
 export default function AdminLogoutButton() {
   const router = useRouter();
 

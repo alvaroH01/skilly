@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage as getErrorMessage } from "@/utils/services";
+/**
+ * Botón «Continuar con Google».
+ *
+ * Inicia el flujo OAuth de Supabase Auth y redirige a /auth/callback, que crea o vincula el perfil. Muestra el mensaje de error si el proveedor falla.
+ *
+ * @returns Botón con estado de carga y mensaje de error.
+ */
 export default function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -31,9 +39,9 @@ export default function GoogleLoginButton() {
       } else if (data?.url) {
         window.location.href = data.url;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error inesperado con Google:", err);
-      setErrorMessage(err?.message || "No se pudo conectar con el servicio de autenticación.");
+      setErrorMessage(getErrorMessage(err, "No se pudo conectar con el servicio de autenticación."));
     } finally {
       setLoading(false);
     }

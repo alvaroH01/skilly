@@ -4,6 +4,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import ValidateProfessionalButton from "@/components/admin/ValidateProfessionalButton";
 
+/** Datos del perfil profesional que muestra la bandeja de validaciones. */
+type ProfessionalDetail = {
+  user_id: string;
+  professional_title: string | null;
+  skills: string[] | null;
+  work_mode: string | null;
+  region: string | null;
+  commune: string | null;
+  phone: string | null;
+  linkedin_url: string | null;
+};
+
 export default async function AdminValidacionesPage() {
   const supabase = await createClient();
 
@@ -52,7 +64,7 @@ export default async function AdminValidacionesPage() {
 
   // Obtenemos datos detallados de perfiles profesionales
   const userIds = profList.map((p) => p.id);
-  let profDetailsMap = new Map<string, any>();
+  let profDetailsMap = new Map<string, ProfessionalDetail>();
 
   if (userIds.length > 0) {
     const { data: details } = await supabase

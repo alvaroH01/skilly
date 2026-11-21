@@ -3,6 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  DEMO_CARDS,
+  formatCardNumber,
+  formatExpiry,
+  type CardKind,
+} from "@/utils/payments/demoCards";
+
+type Receipt = {
+  authorizationCode: string;
+  paidAt: string;
+  amount: number;
+  card?: { brand: string; kind: CardKind; last4: string; installments: number };
+};
 
 type Props = {
   token: string;
@@ -10,6 +23,19 @@ type Props = {
   projectTitle: string;
 };
 
+/**
+ * Checkout simulado de Webpay.
+ *
+ * Recoge los datos de una tarjeta de demostración (crédito o débito), da formato al número y al vencimiento, y envía el pago a POST /api/payments/confirm con el token del enlace. La validación real (algoritmo de Luhn, vencimiento, tipo y tarjetas de prueba permitidas) la hace el servidor, que además define el monto y registra el pago; el navegador nunca decide el resultado. Al aprobar muestra el voucher con el código de autorización.
+ *
+ * @remarks El pago es una simulación sandbox: no hay conexión con Transbank.
+ *
+ * @param props.token Token del enlace /pago/[token].
+ * @param props.amount Monto en CLP mostrado al usuario.
+ * @param props.projectTitle Título del servicio que se paga.
+ *
+ * @returns Botón de pago, modal con el formulario de tarjeta y voucher.
+ */
 export default function PaymentCheckoutButton({
   token,
   amount,
@@ -17,10 +43,23 @@ export default function PaymentCheckoutButton({
 }: Props) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("webpay");
+  const [kind, setKind] = useState<CardKind>("credito");
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [installments, setInstallments] = useState(1);
+  const [showCards, setShowCards] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [receipt, setReceipt] = useState<any>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+
+  function fillDemoCard(number: string, cardKind: CardKind, cardCvv?: string) {
+    setKind(cardKind);
+    setCardNumber(formatCardNumber(number));
+    setExpiry(cardKind === "credito" ? "12/30" : "");
+    setCvv(cardCvv ?? "");
+    setError("");
+  }
 
   async function handleSimulatePayment() {
     try {
@@ -32,7 +71,11 @@ export default function PaymentCheckoutButton({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({
+          token,
+          installments,
+          card: { number: cardNumber, expiry, cvv, kind },
+        }),
       });
 
       const data = await response.json();
@@ -45,13 +88,17 @@ export default function PaymentCheckoutButton({
         authorizationCode: data.authorizationCode || "892341",
         paidAt: data.paidAt || new Date().toISOString(),
         amount: data.amount || amount,
+        card: data.card,
       });
+      // Por seguridad, los datos de la tarjeta se borran del navegador al terminar.
+      setCardNumber("");
+      setExpiry("");
+      setCvv("");
 
       // El comprobante se muestra desde el estado local. No se llama a router.refresh():
       // la orden ya está pagada y la página dejaría de encontrarla (enlace inválido).
-    } catch (err: any) {
-      console.error("Error en pago:", err);
-      setError(err?.message || "No se pudo completar el pago.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "No se pudo completar el pago.");
     } finally {
       setLoading(false);
     }
@@ -75,7 +122,7 @@ export default function PaymentCheckoutButton({
         <div className="mt-3 flex items-center justify-center gap-3 text-xs text-[#9a9ea9]">
           <span>🔒 Transacción segura</span>
           <span>•</span>
-          <span>Webpay Plus</span>
+          <span>Webpay Plus (demostración)</span>
           <span>•</span>
           <span>Débito / Crédito</span>
         </div>
@@ -130,9 +177,29 @@ export default function PaymentCheckoutButton({
                     <strong className="font-mono text-[#303548]">{receipt.authorizationCode}</strong>
                   </div>
 
+                  <div className="flex justify-between border-b border-[#ece8f5] py-2.5">
+                    <span className="text-[#8c91a0]">Tarjeta:</span>
+                    <span className="font-medium text-[#303548]">
+                      {receipt.card
+                        ? `${receipt.card.brand} •••• ${receipt.card.last4}`
+                        : "Tarjeta de demostración"}
+                    </span>
+                  </div>
+
+                  {receipt.card?.kind === "credito" && (
+                    <div className="flex justify-between border-b border-[#ece8f5] py-2.5">
+                      <span className="text-[#8c91a0]">Cuotas:</span>
+                      <span className="font-medium text-[#303548]">
+                        {receipt.card.installments === 1
+                          ? "Sin cuotas"
+                          : `${receipt.card.installments} cuotas sin interés`}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between pt-2.5">
                     <span className="text-[#8c91a0]">Medio de pago:</span>
-                    <span className="font-medium text-[#303548]">Webpay Plus (Débito/Crédito)</span>
+                    <span className="font-medium text-[#303548]">Webpay Plus (demostración)</span>
                   </div>
                 </div>
 
@@ -141,7 +208,7 @@ export default function PaymentCheckoutButton({
                     href="/dashboard/cliente"
                     className="flex w-full items-center justify-center rounded-2xl bg-[#6f4cf6] py-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#5e3be0]"
                   >
-                    Ir a mi Dashboard de Cliente
+                    Ir a mi Dashboard de Contratador
                   </Link>
 
                   <button
@@ -169,7 +236,7 @@ export default function PaymentCheckoutButton({
                         Pasarela Segura Skilly
                       </p>
                       <h2 className="text-lg font-bold text-[#23283a]">
-                        Webpay Plus (Sandbox)
+                        Webpay Plus (Demostración)
                       </h2>
                     </div>
                   </div>
@@ -187,55 +254,124 @@ export default function PaymentCheckoutButton({
                   <p className="mt-1 text-[11px] text-[#787d8d]">{projectTitle}</p>
                 </div>
 
-                {/* OPCIONES DE MEDIO */}
-                <div className="mt-5 space-y-2.5">
-                  <p className="text-xs font-semibold text-[#32374a]">Selecciona tu tarjeta:</p>
-
-                  <label
-                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
-                      selectedMethod === "webpay"
-                        ? "border-[#8e7bf5] bg-[#f8f6ff]"
-                        : "border-[#e7e5ee] bg-white hover:bg-[#fafafc]"
-                    }`}
+                {/* AVISO DE DEMOSTRACIÓN */}
+                <div className="mt-4 rounded-2xl border border-[#f3e1b3] bg-[#fff8e6] p-3.5 text-[11px] leading-5 text-[#8a6a1f]">
+                  <p className="font-bold">Entorno de demostración</p>
+                  <p>
+                    Solo se aceptan tarjetas de prueba. No ingreses tu tarjeta real: no se realiza ningún cobro.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCards((v) => !v)}
+                    className="mt-1 font-semibold underline"
                   >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="method"
-                        checked={selectedMethod === "webpay"}
-                        onChange={() => setSelectedMethod("webpay")}
-                        className="accent-[#6f4cf6]"
-                      />
-                      <div>
-                        <p className="text-xs font-bold text-[#292e40]">Tarjeta de Débito (Redcompra)</p>
-                        <p className="text-[11px] text-[#797e8e]">Banco de Chile, Santander, Estado, BCI</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-[#6848ef]">Webpay</span>
+                    {showCards ? "Ocultar tarjetas de prueba" : "Ver tarjetas de prueba"}
+                  </button>
+
+                  {showCards && (
+                    <ul className="mt-2 space-y-1.5">
+                      {DEMO_CARDS.map((c) => (
+                        <li key={c.number} className="flex items-center justify-between gap-2">
+                          <span>
+                            <span className="font-semibold">{c.label}</span>
+                            <span className="ml-1 font-mono">{formatCardNumber(c.number)}</span>
+                            {c.cvv ? <span> · CVV {c.cvv}</span> : null}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => fillDemoCard(c.number, c.kind, c.cvv)}
+                            className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-[#6848ef] shadow-sm"
+                          >
+                            Usar
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* TIPO DE TARJETA */}
+                <div className="mt-5">
+                  <p className="text-xs font-semibold text-[#32374a]">Tipo de tarjeta</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {(["credito", "debito"] as CardKind[]).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setKind(k)}
+                        className={`rounded-2xl border p-3 text-left text-xs transition ${
+                          kind === k
+                            ? "border-[#8e7bf5] bg-[#f8f6ff]"
+                            : "border-[#e7e5ee] bg-white hover:bg-[#fafafc]"
+                        }`}
+                      >
+                        <span className="block font-bold text-[#292e40]">
+                          {k === "credito" ? "Crédito" : "Débito (Redcompra)"}
+                        </span>
+                        <span className="text-[11px] text-[#797e8e]">
+                          {k === "credito" ? "Visa, Mastercard, Amex" : "Cuenta corriente o vista"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DATOS DE LA TARJETA */}
+                <div className="mt-4 space-y-3">
+                  <label className="block text-xs font-semibold text-[#32374a]">
+                    Número de tarjeta
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="4051 8856 0044 6623"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      className="mt-1 w-full rounded-xl border border-[#e0e1e8] px-3 py-2.5 font-mono text-sm text-[#292e40] outline-none focus:border-[#8e7bf5]"
+                    />
                   </label>
 
-                  <label
-                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
-                      selectedMethod === "credito"
-                        ? "border-[#8e7bf5] bg-[#f8f6ff]"
-                        : "border-[#e7e5ee] bg-white hover:bg-[#fafafc]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="method"
-                        checked={selectedMethod === "credito"}
-                        onChange={() => setSelectedMethod("credito")}
-                        className="accent-[#6f4cf6]"
-                      />
-                      <div>
-                        <p className="text-xs font-bold text-[#292e40]">Tarjeta de Crédito (Visa / Mastercard)</p>
-                        <p className="text-[11px] text-[#797e8e]">Hasta 3 o 6 cuotas sin interés</p>
-                      </div>
+                  {kind === "credito" && (
+                    <div className="grid grid-cols-3 gap-3">
+                      <label className="block text-xs font-semibold text-[#32374a]">
+                        Vencimiento
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          placeholder="MM/AA"
+                          value={expiry}
+                          onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                          className="mt-1 w-full rounded-xl border border-[#e0e1e8] px-3 py-2.5 font-mono text-sm text-[#292e40] outline-none focus:border-[#8e7bf5]"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold text-[#32374a]">
+                        CVV
+                        <input
+                          type="password"
+                          inputMode="numeric"
+                          autoComplete="off"
+                          maxLength={4}
+                          placeholder="123"
+                          value={cvv}
+                          onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
+                          className="mt-1 w-full rounded-xl border border-[#e0e1e8] px-3 py-2.5 font-mono text-sm text-[#292e40] outline-none focus:border-[#8e7bf5]"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold text-[#32374a]">
+                        Cuotas
+                        <select
+                          value={installments}
+                          onChange={(e) => setInstallments(Number(e.target.value))}
+                          className="mt-1 w-full rounded-xl border border-[#e0e1e8] bg-white px-2 py-2.5 text-sm text-[#292e40] outline-none focus:border-[#8e7bf5]"
+                        >
+                          <option value={1}>Sin cuotas</option>
+                          <option value={3}>3 sin interés</option>
+                          <option value={6}>6 sin interés</option>
+                        </select>
+                      </label>
                     </div>
-                    <span className="text-xs font-bold text-[#6848ef]">3 Cuotas</span>
-                  </label>
+                  )}
                 </div>
 
                 {error && (
@@ -256,7 +392,7 @@ export default function PaymentCheckoutButton({
 
                   <button
                     type="button"
-                    disabled={loading}
+                    disabled={loading || cardNumber.replace(/\D/g, "").length < 13}
                     onClick={handleSimulatePayment}
                     className="flex-1 rounded-2xl bg-[#6f4cf6] py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[#5e3ce0] disabled:cursor-not-allowed disabled:opacity-60"
                   >

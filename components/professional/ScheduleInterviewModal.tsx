@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   professionalName?: string;
 };
@@ -16,6 +17,17 @@ const designatedSlots = [
   "16:30 - 17:15 hrs",
 ];
 
+/**
+ * Ventana para agendar la entrevista de validación técnica.
+ *
+ * Ofrece cuatro bloques fijos de 45 minutos entre 10:00 y 17:15 h, recomienda agendar los martes o jueves (la interfaz no impide elegir otro día), genera un enlace de reunión y muestra el comprobante.
+ *
+ * @remarks Limitación conocida: el bloque no se guarda en una tabla (solo se marca onboarding_completed y el enlace se genera en el navegador). Se documenta como mejora.
+ *
+ * @param props.professionalName Nombre usado en el comprobante (por defecto «Profesional»).
+ *
+ * @returns Botón que abre el modal de agendamiento y el comprobante.
+ */
 export default function ScheduleInterviewModal({
   professionalName = "Profesional",
 }: Props) {
@@ -24,7 +36,7 @@ export default function ScheduleInterviewModal({
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(designatedSlots[0]);
   const [loading, setLoading] = useState(false);
-  const [confirmedData, setConfirmedData] = useState<any>(null);
+  const [confirmedData, setConfirmedData] = useState<{ date: string; slot: string; meetLink: string } | null>(null);
   const [error, setError] = useState("");
 
   async function handleConfirmSchedule(e: React.FormEvent) {
@@ -65,9 +77,9 @@ export default function ScheduleInterviewModal({
       });
 
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error agendando entrevista:", err);
-      setError(err?.message || "No se pudo agendar la entrevista.");
+      setError(errorMessage(err, "No se pudo agendar la entrevista."));
     } finally {
       setLoading(false);
     }

@@ -3,10 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   proposalId: string;
 };
 
+/**
+ * Acción del administrador para emitir la orden de pago de una asignación.
+ *
+ * Pide confirmación y llama a POST /api/payments/create con `{ proposalId }`. La ruta valida sesión (401) y rol admin (403), y devuelve el enlace /pago/[token], que se muestra una sola vez porque en la base solo queda el hash SHA-256.
+ *
+ * @param props.proposalId Identificador de la asignación (proposals.id) que se va a cobrar.
+ *
+ * @returns Botón, cuadro de confirmación y enlace de pago generado.
+ */
 export default function CreatePaymentOrderButton({
   proposalId,
 }: Props) {
@@ -62,15 +72,14 @@ export default function CreatePaymentOrderButton({
        * oculta este botón (condición !order) y la ventana con el enlace
        * desaparecería a los pocos segundos. La recarga se hace en closeModal().
        */
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Error generando orden de pago:",
         err
       );
 
       setError(
-        err?.message ||
-          "No pudimos generar la orden de pago."
+        errorMessage(err, "No pudimos generar la orden de pago.")
       );
     } finally {
       setLoading(false);
@@ -172,14 +181,14 @@ export default function CreatePaymentOrderButton({
                 <p className="mt-3 text-sm leading-6 text-[#777c89]">
                   Skilly creará una orden utilizando el
                   monto definido en la propuesta seleccionada
-                  y generará un enlace seguro para el cliente.
+                  y generará un enlace seguro para el contratador.
                 </p>
 
                 <div className="mt-4 rounded-2xl bg-[#f7f4ff] px-4 py-3">
                   <p className="text-xs leading-5 text-[#756a9c]">
                     El enlace tendrá una vigencia de 24 horas.
                     Generarlo todavía no significa que el
-                    cliente haya realizado el pago.
+                    contratador haya realizado el pago.
                   </p>
                 </div>
 

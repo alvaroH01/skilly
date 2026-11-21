@@ -3,6 +3,13 @@ import { createBrowserClient } from "@supabase/ssr";
 const DEFAULT_SUPABASE_URL = "https://hmhvvhwjxtqnggkojayn.supabase.co";
 const DEFAULT_SUPABASE_KEY = "sb_publishable_VM5IJS284f9_z04F4L0FTQ_NUuAjIAm";
 
+/**
+ * Crea el cliente de Supabase para componentes que corren en el navegador
+ * (`"use client"`). Mantiene la sesión del usuario y todas sus consultas quedan
+ * sujetas a las políticas RLS; el navegador nunca decide permisos.
+ *
+ * @returns Cliente de Supabase para el navegador.
+ */
 export function createClient() {
   let url = (process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL).trim();
   let key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_KEY).trim();

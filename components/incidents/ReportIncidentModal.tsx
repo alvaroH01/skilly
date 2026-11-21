@@ -5,12 +5,26 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   projectId: string;
   projectTitle: string;
   userRole?: "cliente" | "profesional";
 };
 
+/**
+ * Ventana para reportar una incidencia sobre una contratación.
+ *
+ * Agrega el reporte (tipo, fecha y detalle) al final de projects.description y pasa la contratación a «pausado» para que Skilly medie. Exige un detalle no vacío.
+ *
+ * @remarks Limitación conocida: la incidencia se guarda como texto en la descripción; está planificada una tabla propia.
+ *
+ * @param props.projectId Contratación afectada.
+ * @param props.projectTitle Título mostrado en la ventana.
+ * @param props.userRole Quién reporta («cliente» por defecto); se incluye en el texto del reporte.
+ *
+ * @returns Botón que abre el modal de reporte.
+ */
 export default function ReportIncidentModal({
   projectId,
   projectTitle,
@@ -75,9 +89,9 @@ export default function ReportIncidentModal({
       }, 2500);
 
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error registrando incidencia:", err);
-      setError(err?.message || "No se pudo registrar la incidencia.");
+      setError(errorMessage(err, "No se pudo registrar la incidencia."));
     } finally {
       setLoading(false);
     }

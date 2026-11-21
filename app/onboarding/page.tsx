@@ -144,12 +144,12 @@ export default function OnboardingPage() {
                       </h3>
 
                       <p className="mt-2 leading-6 text-[#777c8b]">
-                        Encuentra profesionales y servicios especializados para
-                        impulsar proyectos, equipos y necesidades de tu negocio.
+                        Encuentra y contrata servicios especializados de
+                        profesionales validados para tu organización.
                       </p>
 
                       <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-[#806cf0]">
-                        Explorar como cliente
+                        Explorar como contratador
 
                         <span className="transition group-hover:translate-x-1">
                           →

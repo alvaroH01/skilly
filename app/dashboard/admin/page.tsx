@@ -654,6 +654,11 @@ export default async function AdminDashboardPage() {
 
 
 
+  const { count: servicesPendingReview } = await supabase
+    .from("services")
+    .select("id", { count: "exact", head: true })
+    .in("validation_status", ["pendiente", "en_revision"]);
+
   const stats: AdminDashboardStats = {
 
     total_users: Number(
@@ -1172,28 +1177,20 @@ export default async function AdminDashboardPage() {
 
             </Link>
 
-
-
-            <Link
-
-              href="/dashboard/admin/proyectos"
-
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[#6f7482] transition hover:bg-[#f7f6fb] hover:text-[#6848ef]"
-
-            >
-
-              <ProjectIcon />
-
-              Proyectos
-
-            </Link>
-
             <Link
               href="/dashboard/admin/validaciones"
               className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[#6f7482] transition hover:bg-[#f7f6fb] hover:text-[#6848ef]"
             >
               <ProjectIcon />
               Validaciones
+            </Link>
+
+            <Link
+              href="/dashboard/admin/servicios"
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[#6f7482] transition hover:bg-[#f7f6fb] hover:text-[#6848ef]"
+            >
+              <ProjectIcon />
+              Servicios
             </Link>
 
             <Link
@@ -1524,7 +1521,7 @@ export default async function AdminDashboardPage() {
 
                 <p className="mt-1 text-sm text-[#858a98]">
 
-                  Proyectos registrados
+                  Contrataciones registradas
 
                 </p>
 
@@ -1668,7 +1665,7 @@ export default async function AdminDashboardPage() {
 
                   <h2 className="text-lg font-semibold text-[#292e40]">
 
-                    Estado de los proyectos
+                    Estado de las contrataciones
 
                   </h2>
 
@@ -1676,7 +1673,7 @@ export default async function AdminDashboardPage() {
 
                   <p className="mt-1 text-sm text-[#8b8f9c]">
 
-                    Distribución actual de los proyectos
+                    Distribución actual de las contrataciones
 
                     dentro del flujo de Skilly.
 
@@ -1812,7 +1809,7 @@ export default async function AdminDashboardPage() {
 
                   <span className="text-sm text-[#858a98]">
 
-                    Total de proyectos
+                    Total de contrataciones
 
                   </span>
 
@@ -2246,10 +2243,10 @@ export default async function AdminDashboardPage() {
 
                 </Link>
 
-                {/* PROYECTOS POR VALIDAR */}
+                {/* SERVICIOS POR REVISAR */}
 
                 <Link
-                  href="/dashboard/admin/validaciones"
+                  href="/dashboard/admin/servicios"
                   className="rounded-[22px] border border-[#e9e6f2] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[#d8d0ff] hover:shadow-[0_12px_30px_rgba(70,55,130,0.07)]"
                 >
 
@@ -2258,7 +2255,7 @@ export default async function AdminDashboardPage() {
                     <div>
 
                       <p className="text-sm font-medium text-[#666b79]">
-                        Proyectos por validar
+                        Servicios por revisar
                       </p>
 
                       <p className="mt-1 text-xs text-[#999daa]">
@@ -2276,7 +2273,7 @@ export default async function AdminDashboardPage() {
                   <div className="mt-5 flex items-end justify-between">
 
                     <p className="text-3xl font-semibold text-[#5d68cf]">
-                      {stats.projects_pending_validation}
+                      {servicesPendingReview ?? 0}
                     </p>
 
                     <span className="text-xs font-semibold text-[#6c72cc]">
@@ -2853,7 +2850,7 @@ export default async function AdminDashboardPage() {
 
                     {proposals.map(
 
-                      (proposal: any) => {
+                      (proposal) => {
 
 
 

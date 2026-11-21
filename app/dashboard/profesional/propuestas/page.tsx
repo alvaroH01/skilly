@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
-import AcceptCurationButton from "@/components/professional/AcceptCurationButton";
 import ReportIncidentModal from "@/components/incidents/ReportIncidentModal";
 
 function money(value: number | null) {
@@ -94,15 +93,15 @@ export default async function MisPropuestasPage() {
 
           <div>
             <p className="text-sm font-semibold text-[#7458e8]">
-              Oportunidades
+              Contrataciones
             </p>
 
             <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[#20263a]">
-              Mis propuestas
+              Mis contrataciones
             </h1>
 
             <p className="mt-2 text-sm text-[#7c8190]">
-              Revisa las propuestas que has enviado, el feedback de Skilly y gestiona incidencias con proyectos.
+              Revisa los servicios que te contrataron, el estado de su pago y gestiona incidencias.
             </p>
           </div>
 
@@ -116,10 +115,10 @@ export default async function MisPropuestasPage() {
             </Link>
 
             <Link
-              href="/dashboard/profesional/proyectos"
+              href="/dashboard/profesional/servicios"
               className="rounded-xl bg-[#6f4cf6] px-5 py-3 text-sm font-semibold text-white"
             >
-              Explorar proyectos
+              Mis servicios
             </Link>
 
           </div>
@@ -135,19 +134,19 @@ export default async function MisPropuestasPage() {
             </div>
 
             <h2 className="mt-5 text-xl font-semibold text-[#272d42]">
-              Aún no has enviado propuestas
+              Aún no tienes contrataciones
             </h2>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-[#858a99]">
-              Explora los proyectos disponibles y encuentra
-              oportunidades que coincidan con tu experiencia.
+              Cuando una organización contrate alguno de tus
+              servicios, aparecerá aquí.
             </p>
 
             <Link
-              href="/dashboard/profesional/proyectos"
+              href="/dashboard/profesional/servicios"
               className="mt-6 rounded-2xl bg-[#6f4cf6] px-6 py-3.5 text-sm font-semibold text-white"
             >
-              Explorar proyectos
+              Ver mis servicios
             </Link>
 
           </section>
@@ -162,19 +161,6 @@ export default async function MisPropuestasPage() {
                 : proposal.project;
 
               const hasCuration = proposal.message?.includes("RETROALIMENTACIÓN DE SKILLY LATAM");
-              let suggestedAmountNumber: number | null = null;
-              let curationNotes = "";
-
-              if (hasCuration) {
-                const match = proposal.message.match(/Tarifa recomendada por Skilly: \$([0-9\.]+)/);
-                if (match && match[1]) {
-                  suggestedAmountNumber = Number(match[1].replace(/\./g, ""));
-                }
-                const notesMatch = proposal.message.match(/Observaciones del equipo: ([\s\S]*?)(?:\n|━|$)/);
-                if (notesMatch && notesMatch[1]) {
-                  curationNotes = notesMatch[1].trim();
-                }
-              }
 
               // Separamos el mensaje base del profesional de la nota de Skilly para presentarlo limpio
               const displayMessage = proposal.message?.split("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")[0].trim();
@@ -266,39 +252,6 @@ export default async function MisPropuestasPage() {
 
                       </div>
 
-                      {/* TARJETA DE CURADURÍA Y RECOMENDACIÓN DE SKILLY */}
-                      {hasCuration && (
-                        <div className="mt-6 rounded-2xl border border-[#ded8f8] bg-[#f9f8ff] p-5">
-                          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#6848ef]">
-                            <span>✦</span>
-                            <span>Acompañamiento y Curaduría de Skilly</span>
-                          </div>
-
-                          {curationNotes && (
-                            <p className="mt-2 text-xs leading-5 text-[#585d6e]">
-                              {curationNotes}
-                            </p>
-                          )}
-
-                          {suggestedAmountNumber && (
-                            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[#ede8fc] pt-3">
-                              <div>
-                                <span className="text-xs text-[#828796]">Tarifa sugerida por Skilly: </span>
-                                <span className="text-sm font-bold text-[#6848ef]">
-                                  ${suggestedAmountNumber.toLocaleString("es-CL")} CLP
-                                </span>
-                              </div>
-
-                              <AcceptCurationButton
-                                proposalId={proposal.id}
-                                suggestedAmount={suggestedAmountNumber}
-                                currentMessage={proposal.message}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
                     </div>
 
                     {/* ACCIONES */}
@@ -311,13 +264,6 @@ export default async function MisPropuestasPage() {
                             projectTitle={project.title}
                             userRole="profesional"
                           />
-
-                          <Link
-                            href={`/dashboard/profesional/proyectos/${project.id}`}
-                            className="rounded-xl border border-[#d8d1ff] px-4 py-2.5 text-xs font-semibold text-[#6848ef] transition hover:bg-[#f7f5ff]"
-                          >
-                            Ver proyecto
-                          </Link>
                         </>
                       )}
 

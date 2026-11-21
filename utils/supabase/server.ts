@@ -4,6 +4,16 @@ import { cookies } from "next/headers";
 const DEFAULT_SUPABASE_URL = "https://hmhvvhwjxtqnggkojayn.supabase.co";
 const DEFAULT_SUPABASE_KEY = "sb_publishable_VM5IJS284f9_z04F4L0FTQ_NUuAjIAm";
 
+/**
+ * Crea el cliente de Supabase para código que corre en el servidor
+ * (Server Components, rutas `app/api/**`). Lee y escribe la sesión en las
+ * cookies de la petición, por lo que cada consulta se ejecuta con el usuario
+ * autenticado y queda sujeta a las políticas RLS.
+ *
+ * Usa solo la clave publicable; la clave `service_role` no se usa en la aplicación.
+ *
+ * @returns Cliente de Supabase asociado a la sesión de la petición actual.
+ */
 export async function createClient() {
   const cookieStore = await cookies();
 

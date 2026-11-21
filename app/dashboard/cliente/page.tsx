@@ -186,11 +186,11 @@ export default async function DashboardPage() {
               </Link>
 
               <Link
-                href="/dashboard/cliente/proyectos/nuevo"
+                href="/buscar"
                 className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-[#5e6476] transition hover:bg-[#f8f8fc]"
               >
-                <span className="text-lg">⊕</span>
-                Publicar proyecto
+                <span className="text-lg">⌕</span>
+                Explorar servicios
               </Link>
 
               <Link
@@ -199,7 +199,7 @@ export default async function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg">▣</span>
-                  Mis proyectos
+                  Mis contrataciones
                 </div>
                 {projectsList.length > 0 && (
                   <span className="rounded-full bg-[#f1eeff] px-2 py-0.5 text-xs font-semibold text-[#6848ef]">
@@ -303,7 +303,7 @@ export default async function DashboardPage() {
 
               <AccountMenu
                 displayName={displayName}
-                subtitle="Cliente"
+                subtitle="Contratador"
                 initial={initial}
                 role="cliente"
                 unreadNotifications={unreadCount}
@@ -320,24 +320,24 @@ export default async function DashboardPage() {
                   Hola, {firstName} 👋
                 </p>
                 <p className="mt-2 text-xl font-semibold text-[#282f47]">
-                  ¿Qué requerimiento necesitas cubrir hoy?
+                  ¿Qué servicio necesitas contratar hoy?
                 </p>
                 <p className="mt-3 max-w-lg text-sm leading-6 text-[#73798a]">
-                  Publica tu proyecto de People & Culture o Back-Office. Skilly revisará el alcance y la estimación económica para conectar con el talento independiente idóneo.
+                  Explora el catálogo de servicios validados por Skilly, elige al profesional que necesitas, agenda la fecha de inicio y contrata.
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Link
-                    href="/dashboard/cliente/proyectos/nuevo"
+                    href="/buscar"
                     className="inline-flex rounded-2xl bg-[#6f4cf6] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,76,246,0.24)] transition hover:-translate-y-0.5 hover:bg-[#6241e8]"
                   >
-                    + Publicar nuevo proyecto
+                    Explorar servicios →
                   </Link>
                   <Link
                     href="/dashboard/cliente/propuestas"
                     className="inline-flex rounded-2xl border border-[#d8d1ff] bg-white px-5 py-3.5 text-sm font-semibold text-[#6848ef] transition hover:bg-[#fbfaff]"
                   >
-                    Ver propuestas curadas
+                    Ver mis contrataciones
                   </Link>
                 </div>
               </div>
@@ -411,16 +411,16 @@ export default async function DashboardPage() {
                     📝
                   </div>
                   <h3 className="mt-4 text-base font-semibold text-[#252b40]">
-                    Aún no has registrado proyectos
+                    Aún no has contratado servicios
                   </h3>
                   <p className="mt-1 text-sm text-[#7f8494] max-w-md mx-auto">
-                    Comienza publicando los requerimientos de tu área. El equipo de Skilly revisará el contenido para publicarlo en catálogo.
+                    Explora el catálogo, elige un servicio validado por Skilly y agenda su inicio.
                   </p>
                   <Link
-                    href="/dashboard/cliente/proyectos/nuevo"
+                    href="/buscar"
                     className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#6f4cf6] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6241e8]"
                   >
-                    + Crear requerimiento
+                    Explorar servicios
                   </Link>
                 </div>
               ) : (

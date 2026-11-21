@@ -68,7 +68,7 @@ export default async function AdminIncidenciasPage() {
       .in("id", clientIds);
 
     clientMap = new Map(
-      (clients ?? []).map((c) => [c.id, c.full_name || "Cliente Skilly"])
+      (clients ?? []).map((c) => [c.id, c.full_name || "Contratador Skilly"])
     );
   }
 

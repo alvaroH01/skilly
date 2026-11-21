@@ -245,17 +245,16 @@ export default async function ClientNotificationsPage() {
               </h2>
 
               <p className="mt-2 max-w-md text-sm leading-6 text-[#858a99]">
-                Cuando un profesional envíe una propuesta
-                para uno de tus proyectos, recibas un
-                mensaje o exista alguna novedad importante,
-                aparecerá aquí.
+                Cuando contrates un servicio, Skilly emita la
+                orden de pago o exista alguna novedad
+                importante, aparecerá aquí.
               </p>
 
               <Link
-                href="/dashboard/cliente/proyectos/nuevo"
+                href="/buscar"
                 className="mt-6 rounded-2xl bg-[#6f4cf6] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_25px_rgba(111,76,246,0.18)] transition hover:bg-[#6241e8]"
               >
-                Publicar proyecto →
+                Explorar servicios →
               </Link>
 
             </section>

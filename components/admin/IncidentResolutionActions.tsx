@@ -4,12 +4,26 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/clients";
 
+import { errorMessage } from "@/utils/services";
 type Props = {
   projectId: string;
   projectTitle: string;
   currentDescription: string;
 };
 
+/**
+ * Acciones de mediación del administrador sobre una incidencia.
+ *
+ * Permite autorizar un reembolso (100 %, 75 % o 50 %), reprogramar o cerrar el caso. Cada resolución agrega un dictamen al final de projects.description y actualiza projects.status. Si una política RLS bloquea la actualización no hay error, sino 0 filas; por eso el código verifica las filas afectadas.
+ *
+ * @remarks Limitación conocida: las incidencias y dictámenes aún se guardan como texto en la descripción de la contratación; moverlos a una tabla propia está en el plan de mejora.
+ *
+ * @param props.projectId Contratación (projects.id) en disputa.
+ * @param props.projectTitle Título que se muestra en los cuadros de confirmación.
+ * @param props.currentDescription Descripción al abrir la página; se relee antes de escribir para no perder cambios.
+ *
+ * @returns Botones de resolución y modales de confirmación.
+ */
 export default function IncidentResolutionActions({
   projectId,
   projectTitle,
@@ -84,11 +98,11 @@ export default function IncidentResolutionActions({
         setResolutionNotes("");
         router.refresh();
       }, 1800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error en mediación:", err);
       setFeedbackMsg({
         type: "error",
-        text: err?.message || "No se pudo actualizar el estado de mediación.",
+        text: errorMessage(err, "No se pudo actualizar el estado de mediación."),
       });
     } finally {
       setLoading(false);

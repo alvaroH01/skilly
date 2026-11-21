@@ -193,8 +193,8 @@ export default function Home() {
             </h1>
 
             <p className="mt-7 max-w-[590px] text-[17px] leading-8 text-[#5f646d]">
-              Conecta con profesionales independientes para proyectos,
-              servicios y necesidades específicas de tu organización.
+              Contrata servicios de profesionales independientes validados
+              por Skilly para las necesidades específicas de tu organización.
             </p>
 
             {/* ==================================================
@@ -287,10 +287,10 @@ export default function Home() {
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
 
               <Link
-                href="/registro"
+                href="/buscar"
                 className="font-semibold text-[#6140d0] transition hover:text-[#4d2bbd]"
               >
-                Publica un proyecto →
+                Explorar servicios →
               </Link>
 
               <span className="h-1 w-1 rounded-full bg-[#aba5af]" />
