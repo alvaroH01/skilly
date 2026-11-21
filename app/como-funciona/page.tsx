@@ -208,7 +208,7 @@ const clientSteps = [
     number: "01",
     title: "Crea tu cuenta",
     description:
-      "Regístrate en Skilly y selecciona el perfil Cliente para comenzar.",
+      "Regístrate en Skilly y selecciona el perfil Contratador para comenzar.",
     icon: <UserIcon />,
     bg: "#eee8ff",
     color: "#6543dc",
@@ -224,27 +224,27 @@ const clientSteps = [
   },
   {
     number: "03",
-    title: "Publica tu proyecto",
+    title: "Explora el catálogo",
     description:
-      "Describe lo que necesitas, presupuesto, modalidad y habilidades requeridas.",
+      "Busca servicios validados por Skilly y compara profesionales, tarifas y modalidad.",
     icon: <ProjectIcon />,
     bg: "#fff0df",
     color: "#d78328",
   },
   {
     number: "04",
-    title: "Recibe propuestas",
+    title: "Elige y agenda",
     description:
-      "Los profesionales interesados podrán enviar una propuesta asociada a tu proyecto.",
+      "Selecciona el servicio que necesitas y define la fecha de inicio.",
     icon: <ProposalIcon />,
     bg: "#e9f2ff",
     color: "#347fc2",
   },
   {
     number: "05",
-    title: "Revisa y decide",
+    title: "Paga y evalúa",
     description:
-      "Compara las propuestas recibidas y selecciona la alternativa que mejor se ajuste a tu necesidad.",
+      "Skilly emite una orden de pago segura. Al pagar, el servicio queda en ejecución y luego entregas tu evaluación privada.",
     icon: <CheckIcon />,
     bg: "#ffe9e2",
     color: "#d96849",
@@ -272,27 +272,27 @@ const professionalSteps = [
   },
   {
     number: "03",
-    title: "Explora oportunidades",
+    title: "Publica tu servicio",
     description:
-      "Busca proyectos disponibles y revisa cuáles se ajustan mejor a tu perfil.",
+      "Describe lo que ofreces: alcance, duración y tarifa.",
     icon: <SearchIcon />,
     bg: "#e9f2ff",
     color: "#347fc2",
   },
   {
     number: "04",
-    title: "Envía tu propuesta",
+    title: "Revísalo con Skilly",
     description:
-      "Indica tu mensaje, valor propuesto y plazo estimado para realizar el proyecto.",
+      "Skilly revisa tu servicio y puede sugerirte ajustes de tarifa. Aceptas la versión final y se publica en el catálogo.",
     icon: <ProposalIcon />,
     bg: "#fff0df",
     color: "#d78328",
   },
   {
     number: "05",
-    title: "Revisa el resultado",
+    title: "Recibe contrataciones",
     description:
-      "Podrás consultar el estado de tu propuesta y recibir notificaciones cuando exista una actualización.",
+      "Las organizaciones contratan tu servicio y recibes notificaciones del pago y de la fecha de inicio.",
     icon: <CheckIcon />,
     bg: "#ffe9e2",
     color: "#d96849",
@@ -406,7 +406,7 @@ export default function HowItWorksPage() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-[720px] text-base leading-8 text-[#686d79] sm:text-lg">
-            Encuentra talento o descubre nuevas oportunidades siguiendo un
+            Contrata servicios profesionales o publica los tuyos siguiendo un
             proceso simple, ordenado y directo.
           </p>
 
@@ -423,7 +423,7 @@ export default function HowItWorksPage() {
               href="/buscar"
               className="rounded-2xl border border-[#ded8e6] bg-white/80 px-6 py-3.5 text-sm font-semibold text-[#414654] transition hover:bg-white"
             >
-              Explorar oportunidades
+              Explorar servicios
             </Link>
 
           </div>
@@ -445,7 +445,7 @@ export default function HowItWorksPage() {
             <div>
 
               <span className="inline-flex rounded-full bg-[#eee8ff] px-4 py-2 text-xs font-semibold text-[#6543dc]">
-                Para clientes
+                Para contratadores
               </span>
 
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#20253a]">
@@ -453,17 +453,17 @@ export default function HowItWorksPage() {
               </h2>
 
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[#737884]">
-                Publica una necesidad específica y permite que profesionales
-                interesados presenten sus propuestas.
+                Explora servicios validados por Skilly, agenda la fecha de
+                inicio y contrata de forma segura.
               </p>
 
             </div>
 
             <Link
-              href="/registro"
+              href="/buscar"
               className="text-sm font-semibold text-[#6543dc]"
             >
-              Publicar un proyecto →
+              Explorar servicios →
             </Link>
 
           </div>
@@ -532,8 +532,8 @@ export default function HowItWorksPage() {
               </h2>
 
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[#737884]">
-                Construye tu perfil, descubre proyectos y presenta propuestas
-                que reflejen tu experiencia y disponibilidad.
+                Construye tu perfil y publica servicios que reflejen tu
+                experiencia y disponibilidad.
               </p>
 
             </div>
@@ -542,7 +542,7 @@ export default function HowItWorksPage() {
               href="/buscar"
               className="text-sm font-semibold text-[#6543dc]"
             >
-              Explorar proyectos →
+              Ver el catálogo →
             </Link>
 
           </div>
@@ -609,7 +609,7 @@ export default function HowItWorksPage() {
             </h3>
 
             <p className="mt-2 text-sm leading-6 text-[#797e8a]">
-              Descubre perfiles, proyectos y oportunidades sin depender de
+              Descubre perfiles y servicios sin depender de
               múltiples canales.
             </p>
 
@@ -626,7 +626,7 @@ export default function HowItWorksPage() {
             </h3>
 
             <p className="mt-2 text-sm leading-6 text-[#797e8a]">
-              Revisa proyectos, propuestas y estados desde una interfaz simple y
+              Revisa servicios, contrataciones y estados desde una interfaz simple y
               ordenada.
             </p>
 
@@ -639,12 +639,12 @@ export default function HowItWorksPage() {
             </div>
 
             <h3 className="mt-5 font-semibold text-[#262c40]">
-              Oportunidades concretas
+              Servicios concretos
             </h3>
 
             <p className="mt-2 text-sm leading-6 text-[#797e8a]">
-              Cada proyecto presenta una necesidad específica para facilitar una
-              conexión más relevante.
+              Cada servicio detalla su alcance, duración y tarifa para facilitar una
+              contratación más clara.
             </p>
 
           </div>

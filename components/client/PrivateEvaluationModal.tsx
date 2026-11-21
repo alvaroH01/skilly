@@ -47,31 +47,20 @@ export default function PrivateEvaluationModal({
         return;
       }
 
-      // Guardamos la evaluación privada, agregándola al final de la descripción (sin reemplazarla)
-      const evaluationText = `\n\n[EVALUACIÓN PRIVADA SKILLY]\n• Plazos: ${deadlinesRating}\n• Calidad técnica: ${qualityRating}\n• Comunicación: ${communicationRating}\n• Fortalezas: ${strengths.trim()}\n• Oportunidades de mejora: ${improvements.trim()}`;
+      // La evaluación se guarda como un documento JSONB en la tabla private_evaluations
+      // mediante la función submit_private_evaluation (solo la lee el administrador).
+      const { error: rpcError } = await supabase.rpc("submit_private_evaluation", {
+        p_project_id: projectId,
+        p_payload: {
+          plazos: deadlinesRating,
+          calidad: qualityRating,
+          comunicacion: communicationRating,
+          fortalezas: strengths.trim(),
+          mejoras: improvements.trim(),
+        },
+      });
 
-      const { data: currentProject, error: readError } = await supabase
-        .from("projects")
-        .select("description")
-        .eq("id", projectId)
-        .single();
-
-      if (readError) throw readError;
-
-      const { data: updatedRows, error: updateError } = await supabase
-        .from("projects")
-        .update({
-          description: `${currentProject?.description || ""}${evaluationText}`,
-        })
-        .eq("id", projectId)
-        .select("id");
-
-      if (updateError) throw updateError;
-
-      // Una política RLS que bloquea el UPDATE no da error: afecta 0 filas
-      if (!updatedRows || updatedRows.length === 0) {
-        throw new Error("No se pudo guardar la evaluación en este proyecto.");
-      }
+      if (rpcError) throw rpcError;
 
       setSuccess(true);
       setTimeout(() => {

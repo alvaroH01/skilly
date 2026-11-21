@@ -172,14 +172,14 @@ export default function CreatePaymentOrderButton({
                 <p className="mt-3 text-sm leading-6 text-[#777c89]">
                   Skilly creará una orden utilizando el
                   monto definido en la propuesta seleccionada
-                  y generará un enlace seguro para el cliente.
+                  y generará un enlace seguro para el contratador.
                 </p>
 
                 <div className="mt-4 rounded-2xl bg-[#f7f4ff] px-4 py-3">
                   <p className="text-xs leading-5 text-[#756a9c]">
                     El enlace tendrá una vigencia de 24 horas.
                     Generarlo todavía no significa que el
-                    cliente haya realizado el pago.
+                    contratador haya realizado el pago.
                   </p>
                 </div>
 

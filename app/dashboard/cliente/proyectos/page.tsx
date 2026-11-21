@@ -72,10 +72,10 @@ export default async function MisProyectosPage() {
 
             <div>
               <h1 className="text-xl font-bold tracking-tight text-[#20263a]">
-                Mis proyectos
+                Mis contrataciones
               </h1>
               <p className="text-xs text-[#7c8190]">
-                Gestiona tus proyectos, reporta incidencias o entrega evaluación privada.
+                Gestiona los servicios que contrataste, reporta incidencias o entrega tu evaluación privada.
               </p>
             </div>
           </div>
@@ -89,10 +89,10 @@ export default async function MisProyectosPage() {
             </Link>
 
             <Link
-              href="/dashboard/cliente/proyectos/nuevo"
+              href="/buscar"
               className="rounded-xl bg-[#6f4cf6] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#5e3be0]"
             >
-              + Publicar proyecto
+              Explorar servicios
             </Link>
           </div>
 
@@ -106,18 +106,18 @@ export default async function MisProyectosPage() {
             </div>
 
             <h2 className="mt-5 text-xl font-semibold text-[#272d42]">
-              Todavía no tienes proyectos
+              Todavía no tienes contrataciones
             </h2>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-[#858a99]">
-              Publica tu primera necesidad y comenzará el proceso de revisión por parte de Skilly para ser publicado.
+              Explora el catálogo de servicios validados por Skilly y contrata el que necesites.
             </p>
 
             <Link
-              href="/dashboard/cliente/proyectos/nuevo"
+              href="/buscar"
               className="mt-6 rounded-2xl bg-[#6f4cf6] px-6 py-3.5 text-sm font-semibold text-white"
             >
-              Publicar mi primer proyecto
+              Explorar servicios
             </Link>
 
           </section>
@@ -207,10 +207,12 @@ export default async function MisProyectosPage() {
                         userRole="cliente"
                       />
 
-                      <PrivateEvaluationModal
-                        projectId={project.id}
-                        projectTitle={project.title}
-                      />
+                      {["en_ejecucion", "pausado", "cerrado"].includes(project.status) && (
+                        <PrivateEvaluationModal
+                          projectId={project.id}
+                          projectTitle={project.title}
+                        />
+                      )}
 
                       <Link
                         href={`/dashboard/cliente/propuestas?project=${project.id}`}

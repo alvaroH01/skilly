@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash, randomInt } from "crypto";
 import { createClient } from "@/utils/supabase/server";
+import { evaluateDemoCard, type CardKind } from "@/utils/payments/demoCards";
 
 /**
  * Confirma el pago de una orden.
@@ -12,8 +13,11 @@ import { createClient } from "@/utils/supabase/server";
  *  - La función actualiza orden, propuesta, proyecto y notificaciones en una
  *    sola transacción, valida vigencia (24 h) y evita pagos repetidos.
  *
- * Nota: el cobro es una simulación (sandbox). En producción, esta ruta debe
- * llamar a Transbank y solo invocar mark_payment_paid si el proveedor confirma.
+ * Entorno de demostración: la ruta valida la tarjeta ingresada contra la lista
+ * de tarjetas de prueba (utils/payments/demoCards.ts). Solo si la tarjeta es
+ * aprobada se invoca mark_payment_paid; una tarjeta rechazada no consume el
+ * enlace de pago. El número de tarjeta nunca se guarda ni se escribe en logs.
+ * En producción, esta ruta debe llamar a Transbank y confirmar con el proveedor.
  */
 export async function POST(request: Request) {
   try {
@@ -42,6 +46,28 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    /* Validación de la tarjeta de demostración (antes de tocar la orden) */
+    const card = body?.card;
+    const kind: CardKind = card?.kind === "debito" ? "debito" : "credito";
+    const evaluation = evaluateDemoCard({
+      number: typeof card?.number === "string" ? card.number : "",
+      expiry: typeof card?.expiry === "string" ? card.expiry : "",
+      cvv: typeof card?.cvv === "string" ? card.cvv : "",
+      kind,
+    });
+
+    if (!evaluation.ok) {
+      return NextResponse.json(
+        { error: evaluation.error, rejected: evaluation.status === 402 },
+        { status: evaluation.status }
+      );
+    }
+
+    const installments =
+      kind === "credito" && [1, 3, 6].includes(Number(body?.installments))
+        ? Number(body.installments)
+        : 1;
 
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const authorizationCode = `SBX-${randomInt(100000, 1000000)}`;
@@ -75,6 +101,12 @@ export async function POST(request: Request) {
       amount: result?.amount,
       authorizationCode,
       paidAt: new Date().toISOString(),
+      card: {
+        brand: evaluation.card.brand,
+        kind,
+        last4: evaluation.last4,
+        installments,
+      },
     });
   } catch (err: unknown) {
     console.error("Error inesperado confirmando pago:", err);

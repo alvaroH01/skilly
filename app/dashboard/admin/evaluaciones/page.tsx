@@ -29,45 +29,62 @@ export default async function AdminEvaluacionesPage() {
   }
 
   /* =====================================================
-     2. OBTENER PROYECTOS CON EVALUACIONES PRIVADAS
+     2. OBTENER EVALUACIONES PRIVADAS (documentos JSONB)
+     RLS: solo el administrador puede leer private_evaluations.
   ===================================================== */
-  const { data: projectsData, error: projectsError } = await supabase
-    .from("projects")
-    .select(`
-      id,
-      client_id,
-      title,
-      description,
-      category,
-      modality,
-      status,
-      created_at
-    `)
-    .ilike("description", "%[EVALUACIÓN PRIVADA SKILLY]%")
+  const { data: evaluationsData, error: evaluationsError } = await supabase
+    .from("private_evaluations")
+    .select("id, project_id, evaluator_id, professional_id, payload, created_at")
     .order("created_at", { ascending: false });
 
-  if (projectsError) {
-    console.error("Error consultando evaluaciones privadas:", projectsError.message);
+  if (evaluationsError) {
+    console.error("Error consultando evaluaciones privadas:", evaluationsError.message);
   }
 
-  const evaluatedProjects = projectsData ?? [];
+  const evaluations = evaluationsData ?? [];
 
-  // Obtenemos los clientes
-  const clientIds = [
-    ...new Set(evaluatedProjects.map((p) => p.client_id).filter(Boolean)),
+  const projectIds = [...new Set(evaluations.map((e) => e.project_id))];
+  const personIds = [
+    ...new Set(
+      evaluations
+        .flatMap((e) => [e.evaluator_id, e.professional_id])
+        .filter(Boolean) as string[]
+    ),
   ];
 
-  let clientMap = new Map<string, string>();
-  if (clientIds.length > 0) {
-    const { data: clients } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", clientIds);
-
-    clientMap = new Map(
-      (clients ?? []).map((c) => [c.id, c.full_name || "Cliente Skilly"])
+  const projectMap = new Map<string, { title: string; category: string }>();
+  if (projectIds.length > 0) {
+    const { data: projects } = await supabase
+      .from("projects")
+      .select("id, title, category")
+      .in("id", projectIds);
+    (projects ?? []).forEach((p) =>
+      projectMap.set(p.id, { title: p.title, category: p.category })
     );
   }
+
+  const nameMap = new Map<string, string>();
+  if (personIds.length > 0) {
+    const { data: people } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", personIds);
+    (people ?? []).forEach((p) => nameMap.set(p.id, p.full_name || "Usuario Skilly"));
+  }
+
+  const LABELS: Record<string, string> = {
+    excelente: "Excelente (a tiempo o antes de lo previsto)",
+    conforme: "Conforme (acorde a lo acordado)",
+    retrasos_justificados: "Retrasos con justificación y aviso oportuno",
+    retrasos_no_avisados: "Retrasos significativos sin comunicación previa",
+    supero_expectativas: "Superó las expectativas",
+    requirio_ajustes: "Requirió múltiples rondas de corrección",
+    insuficiente: "No alcanzó el nivel técnico esperado",
+    fluida: "Fluida, proactiva y orientada a soluciones",
+    adecuada: "Adecuada y respetuosa",
+    falto_comunicacion: "Faltó claridad y respuesta oportuna",
+  };
+  const label = (v: unknown) => (typeof v === "string" ? LABELS[v] ?? v : "—");
 
   return (
     <main className="min-h-screen bg-[#f6f7fb]">
@@ -131,7 +148,7 @@ export default async function AdminEvaluacionesPage() {
         <section className="mt-7">
           <div className="inline-flex items-center gap-3 rounded-2xl border border-[#e8e4f4] bg-white px-5 py-3 shadow-sm">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#eeeaff] font-bold text-[#6848ef]">
-              {evaluatedProjects.length}
+              {evaluations.length}
             </div>
             <div>
               <p className="text-xs text-[#999daa]">Evaluaciones confidenciales</p>
@@ -144,7 +161,7 @@ export default async function AdminEvaluacionesPage() {
 
         {/* LISTADO DE EVALUACIONES */}
         <section className="mt-6">
-          {evaluatedProjects.length === 0 ? (
+          {evaluations.length === 0 ? (
             <div className="rounded-[28px] border border-dashed border-[#ddd9e9] bg-white px-6 py-16 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f1edff] text-2xl text-[#6f4cf6]">
                 ✓
@@ -158,13 +175,17 @@ export default async function AdminEvaluacionesPage() {
             </div>
           ) : (
             <div className="space-y-5">
-              {evaluatedProjects.map((p) => {
-                const clientName = clientMap.get(p.client_id) || "Organización";
-                const evaluationContent = p.description.split("━━━━━━━━━━━━━━━━━━━━")[0].trim();
+              {evaluations.map((ev) => {
+                const project = projectMap.get(ev.project_id);
+                const clientName = nameMap.get(ev.evaluator_id) || "Contratador";
+                const professionalName = ev.professional_id
+                  ? nameMap.get(ev.professional_id) || "Profesional"
+                  : "—";
+                const doc = (ev.payload ?? {}) as Record<string, unknown>;
 
                 return (
                   <article
-                    key={p.id}
+                    key={ev.id}
                     className="overflow-hidden rounded-[26px] border border-[#e8e5f0] bg-white p-6 shadow-sm sm:p-7"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#efedf5] pb-4">
@@ -173,25 +194,40 @@ export default async function AdminEvaluacionesPage() {
                           🔒 Confidencial Skilly
                         </span>
                         <h2 className="mt-2 text-xl font-bold text-[#23283c]">
-                          {p.title}
+                          {project?.title ?? "Contratación"}
                         </h2>
                         <p className="text-xs text-[#7e8494]">
-                          Cliente: <strong className="text-[#34394b]">{clientName}</strong>
+                          Contratador: <strong className="text-[#34394b]">{clientName}</strong>
+                          {" · "}
+                          Profesional: <strong className="text-[#34394b]">{professionalName}</strong>
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-[#e8f8ef] px-3 py-1 text-xs font-bold text-[#2d8f5d]">
-                        Categoría: {p.category}
-                      </span>
+                      {project?.category && (
+                        <span className="rounded-full bg-[#e8f8ef] px-3 py-1 text-xs font-bold text-[#2d8f5d]">
+                          Categoría: {project.category}
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-5 rounded-2xl bg-[#f8f7fc] p-5">
                       <p className="text-xs font-semibold uppercase tracking-wider text-[#8174a8]">
-                        Retroalimentación del Cliente a Skilly:
+                        Retroalimentación del Contratador a Skilly:
                       </p>
-                      <div className="mt-3 whitespace-pre-line text-xs leading-6 text-[#4a5062]">
-                        {evaluationContent}
-                      </div>
+
+                      {typeof doc.texto_legado === "string" ? (
+                        <div className="mt-3 whitespace-pre-line text-xs leading-6 text-[#4a5062]">
+                          {doc.texto_legado}
+                        </div>
+                      ) : (
+                        <dl className="mt-3 space-y-2 text-xs leading-6 text-[#4a5062]">
+                          <div><dt className="inline font-semibold">Plazos: </dt><dd className="inline">{label(doc.plazos)}</dd></div>
+                          <div><dt className="inline font-semibold">Calidad técnica: </dt><dd className="inline">{label(doc.calidad)}</dd></div>
+                          <div><dt className="inline font-semibold">Comunicación: </dt><dd className="inline">{label(doc.comunicacion)}</dd></div>
+                          <div><dt className="inline font-semibold">Fortalezas: </dt><dd className="inline whitespace-pre-line">{String(doc.fortalezas || "—")}</dd></div>
+                          <div><dt className="inline font-semibold">Oportunidades de mejora: </dt><dd className="inline whitespace-pre-line">{String(doc.mejoras || "—")}</dd></div>
+                        </dl>
+                      )}
                     </div>
                   </article>
                 );

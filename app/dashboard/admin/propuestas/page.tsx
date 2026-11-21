@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import CreatePaymentOrderButton from "@/components/admin/CreatePaymentOrderButton";
-import ProposalCurationActions from "@/components/admin/ProposalCurationActions";
 
 function money(value: number | null) {
   if (!value) return "Monto no definido";
@@ -305,7 +304,7 @@ export default async function AdminProposalsPage() {
 
                 const clientName =
                   names.get(project?.client_id) ||
-                  "Cliente";
+                  "Contratador";
 
                 const hasCuration = proposal.message?.includes("RETROALIMENTACIÓN DE SKILLY LATAM");
 
@@ -335,12 +334,6 @@ export default async function AdminProposalsPage() {
                             </span>
                           )}
 
-                          {hasCuration && (
-                            <span className="rounded-full bg-[#f0ecff] px-3 py-1 text-xs font-bold text-[#6848ef]">
-                              ✦ Con retroalimentación de Skilly
-                            </span>
-                          )}
-
                           <span className="text-xs text-[#9a9eaa]">
                             {formatDate(
                               proposal.created_at
@@ -354,7 +347,7 @@ export default async function AdminProposalsPage() {
                         </h2>
 
                         <p className="mt-2 text-sm text-[#858a98]">
-                          Cliente:{" "}
+                          Contratador:{" "}
                           <span className="font-semibold text-[#555a6b]">
                             {clientName}
                           </span>
@@ -405,21 +398,14 @@ export default async function AdminProposalsPage() {
                       <div className="mt-6 flex flex-col gap-4 rounded-[22px] border border-[#eee9f8] bg-[#fdfcff] p-5 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wider text-[#796e98]">
-                            Acciones de Acompañamiento
+                            Acciones de pago
                           </p>
                           <p className="mt-1 text-xs text-[#8f94a2]">
-                            Añade recomendaciones comerciales o sugiere un ajuste de tarifa al profesional.
+                            Genera la orden de pago de la contratación y comparte el enlace seguro con el contratador.
                           </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
-                          <ProposalCurationActions
-                            proposalId={proposal.id}
-                            currentAmount={proposal.proposed_amount}
-                            currentMessage={proposal.message}
-                            professionalName={professionalName}
-                            projectTitle={project?.title || "Proyecto"}
-                          />
 
                           {proposal.status === "seleccionada" && !order && (
                             <CreatePaymentOrderButton
