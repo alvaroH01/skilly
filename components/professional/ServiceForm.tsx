@@ -17,6 +17,15 @@ type Props = {
 const inputClass =
   "w-full rounded-2xl border border-[#e2e1e9] bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#9b8af8] focus:ring-4 focus:ring-[#6f4cf6]/10";
 
+/**
+ * Formulario para crear o editar un servicio del catálogo.
+ *
+ * Valida título, descripción, categoría, modalidad, precio y duración antes de guardar en la tabla services. El trigger guard_service fuerza que un servicio nuevo nazca como borrador y que editar uno publicado lo devuelva a revisión.
+ *
+ * @param props.service Servicio existente al editar; si no se entrega, el formulario crea uno nuevo.
+ *
+ * @returns Formulario de servicio con mensajes de validación.
+ */
 export default function ServiceForm({ service }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(service?.title ?? "");

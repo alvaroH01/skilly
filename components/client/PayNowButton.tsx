@@ -8,6 +8,16 @@ type Props = {
   amount: number;
 };
 
+/**
+ * Botón «Pagar ahora» del Contratador.
+ *
+ * Llama a POST /api/payments/link con `{ orderId }` para generar el enlace seguro de 24 horas y redirige a /pago/[token].
+ *
+ * @param props.orderId Orden de pago (payment_orders.id) pendiente.
+ * @param props.amount Monto en CLP que se muestra en el botón; el monto real lo define el servidor.
+ *
+ * @returns Botón con estado de carga y mensaje de error.
+ */
 export default function PayNowButton({ orderId, amount }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

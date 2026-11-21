@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 
+/**
+ * Botón para visitantes sin sesión que invita a iniciar sesión.
+ *
+ * Abre un aviso con enlaces a /login y /registro; no ejecuta ninguna acción sobre los datos.
+ *
+ * @returns Botón y ventana de aviso.
+ */
 export default function LoginRequiredButton() {
   const [open, setOpen] =
     useState(false);

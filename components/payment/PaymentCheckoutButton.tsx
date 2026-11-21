@@ -23,6 +23,19 @@ type Props = {
   projectTitle: string;
 };
 
+/**
+ * Checkout simulado de Webpay.
+ *
+ * Recoge los datos de una tarjeta de demostración (crédito o débito), da formato al número y al vencimiento, y envía el pago a POST /api/payments/confirm con el token del enlace. La validación real (algoritmo de Luhn, vencimiento, tipo y tarjetas de prueba permitidas) la hace el servidor, que además define el monto y registra el pago; el navegador nunca decide el resultado. Al aprobar muestra el voucher con el código de autorización.
+ *
+ * @remarks El pago es una simulación sandbox: no hay conexión con Transbank.
+ *
+ * @param props.token Token del enlace /pago/[token].
+ * @param props.amount Monto en CLP mostrado al usuario.
+ * @param props.projectTitle Título del servicio que se paga.
+ *
+ * @returns Botón de pago, modal con el formulario de tarjeta y voucher.
+ */
 export default function PaymentCheckoutButton({
   token,
   amount,

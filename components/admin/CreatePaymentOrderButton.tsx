@@ -8,6 +8,15 @@ type Props = {
   proposalId: string;
 };
 
+/**
+ * Acción del administrador para emitir la orden de pago de una asignación.
+ *
+ * Pide confirmación y llama a POST /api/payments/create con `{ proposalId }`. La ruta valida sesión (401) y rol admin (403), y devuelve el enlace /pago/[token], que se muestra una sola vez porque en la base solo queda el hash SHA-256.
+ *
+ * @param props.proposalId Identificador de la asignación (proposals.id) que se va a cobrar.
+ *
+ * @returns Botón, cuadro de confirmación y enlace de pago generado.
+ */
 export default function CreatePaymentOrderButton({
   proposalId,
 }: Props) {

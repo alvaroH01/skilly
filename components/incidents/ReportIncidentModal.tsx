@@ -12,6 +12,19 @@ type Props = {
   userRole?: "cliente" | "profesional";
 };
 
+/**
+ * Ventana para reportar una incidencia sobre una contratación.
+ *
+ * Agrega el reporte (tipo, fecha y detalle) al final de projects.description y pasa la contratación a «pausado» para que Skilly medie. Exige un detalle no vacío.
+ *
+ * @remarks Limitación conocida: la incidencia se guarda como texto en la descripción; está planificada una tabla propia.
+ *
+ * @param props.projectId Contratación afectada.
+ * @param props.projectTitle Título mostrado en la ventana.
+ * @param props.userRole Quién reporta («cliente» por defecto); se incluye en el texto del reporte.
+ *
+ * @returns Botón que abre el modal de reporte.
+ */
 export default function ReportIncidentModal({
   projectId,
   projectTitle,

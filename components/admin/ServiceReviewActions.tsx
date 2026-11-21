@@ -14,6 +14,17 @@ type Props = {
 const inputClass =
   "w-full rounded-xl border border-[#e2e1e9] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#9b8af8] focus:ring-4 focus:ring-[#6f4cf6]/10";
 
+/**
+ * Acciones de revisión de un servicio del catálogo por el administrador.
+ *
+ * Llama a la función review_service con la acción «en_revision», «cambios» o «aprobar», y con observaciones y un precio sugerido opcional. La función valida que quien llama sea administrador y notifica al Profesional.
+ *
+ * @param props.serviceId Servicio que se revisa.
+ * @param props.validationStatus Estado de validación actual; define qué botones se muestran.
+ * @param props.currentPrice Precio vigente del servicio, usado como referencia para la sugerencia.
+ *
+ * @returns Formulario de observaciones, precio sugerido y botones de acción.
+ */
 export default function ServiceReviewActions({ serviceId, validationStatus, currentPrice }: Props) {
   const router = useRouter();
   const [notes, setNotes] = useState("");

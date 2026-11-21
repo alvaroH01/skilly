@@ -17,6 +17,17 @@ const designatedSlots = [
   "16:30 - 17:15 hrs",
 ];
 
+/**
+ * Ventana para agendar la entrevista de validación técnica.
+ *
+ * Ofrece cuatro bloques fijos de 45 minutos entre 10:00 y 17:15 h, recomienda agendar los martes o jueves (la interfaz no impide elegir otro día), genera un enlace de reunión y muestra el comprobante.
+ *
+ * @remarks Limitación conocida: el bloque no se guarda en una tabla (solo se marca onboarding_completed y el enlace se genera en el navegador). Se documenta como mejora.
+ *
+ * @param props.professionalName Nombre usado en el comprobante (por defecto «Profesional»).
+ *
+ * @returns Botón que abre el modal de agendamiento y el comprobante.
+ */
 export default function ScheduleInterviewModal({
   professionalName = "Profesional",
 }: Props) {

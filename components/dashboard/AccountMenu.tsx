@@ -14,6 +14,19 @@ type AccountMenuProps = {
   unreadNotifications?: number;
 };
 
+/**
+ * Menú de cuenta de los paneles de Contratador y Profesional.
+ *
+ * Muestra el nombre, el rol y las notificaciones sin leer; permite ir al perfil o a las notificaciones y cerrar sesión con supabase.auth.signOut(). Se cierra al hacer clic fuera.
+ *
+ * @param props.displayName Nombre visible.
+ * @param props.subtitle Texto secundario (por ejemplo, el correo).
+ * @param props.initial Inicial para el avatar.
+ * @param props.role Rol que define los enlaces del menú.
+ * @param props.unreadNotifications Cantidad de notificaciones sin leer (0 por defecto).
+ *
+ * @returns Menú desplegable con indicador de notificaciones.
+ */
 export default function AccountMenu({
   displayName,
   subtitle,

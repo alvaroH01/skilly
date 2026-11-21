@@ -14,6 +14,15 @@ function todayLocal(): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
+/**
+ * Formulario de contratación de un servicio del catálogo.
+ *
+ * Pide la fecha de inicio y notas opcionales, y llama a la función contratar_servicio, que valida que el servicio esté activo y validado, que la fecha no sea pasada y que el Contratador no sea el propio Profesional. La función crea la contratación y la asignación en una sola transacción.
+ *
+ * @param props.serviceId Identificador del servicio (services.id) que se contrata.
+ *
+ * @returns Formulario con estado de envío, éxito y error.
+ */
 export default function ContractServiceForm({ serviceId }: Props) {
   const [startDate, setStartDate] = useState("");
   const [notes, setNotes] = useState("");

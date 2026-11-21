@@ -13,6 +13,15 @@ const primary =
 const secondary =
   "rounded-xl border border-[#e1e2e8] px-4 py-2 text-xs font-semibold text-[#626776] transition hover:bg-[#f8f8fb] disabled:opacity-60";
 
+/**
+ * Acciones del Profesional sobre un servicio de su catálogo.
+ *
+ * Según el estado de validación muestra editar, enviar o reenviar a revisión (función submit_service_for_validation), aceptar la propuesta final de Skilly (accept_service_proposal), pausar o reactivar la publicación y eliminar borradores. Las operaciones que una política RLS bloquea devuelven 0 filas sin error, por lo que se trata como acción no permitida.
+ *
+ * @param props.service Servicio sobre el que se actúa.
+ *
+ * @returns Botones según el estado del servicio.
+ */
 export default function ServiceActions({ service }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

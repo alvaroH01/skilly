@@ -11,6 +11,19 @@ type Props = {
   isCurrentlyValidated: boolean;
 };
 
+/**
+ * Botón para validar o revocar la validación técnica de un Profesional.
+ *
+ * Actualiza profiles.onboarding_completed del usuario indicado y muestra un mensaje de confirmación.
+ *
+ * @remarks Limitación conocida: usa onboarding_completed como indicador de validación en lugar de professional_profiles.verification_status, que es el campo diseñado para ello; la política RLS de administrador es la que autoriza el cambio.
+ *
+ * @param props.professionalId Identificador del perfil (profiles.id).
+ * @param props.professionalName Nombre usado en el mensaje de confirmación.
+ * @param props.isCurrentlyValidated Estado inicial de la validación.
+ *
+ * @returns Botón que alterna la validación.
+ */
 export default function ValidateProfessionalButton({
   professionalId,
   professionalName,

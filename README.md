@@ -11,13 +11,12 @@ Plataforma web transaccional y curada que conecta a organizaciones (PyMEs, start
 
 Skilly no es un marketplace abierto: Skilly valida antes de publicar y antes de cobrar.
 
-1. El **Cliente** publica un proyecto y lo envía a validación.
-2. El **Administrador** de Skilly lo revisa, lo valida y lo publica en el catálogo (`/buscar`).
-3. Un **Profesional** postula con un monto y un plazo. Skilly puede sugerir una tarifa (curaduría comercial).
-4. El Cliente selecciona una propuesta.
-5. El Administrador genera una **orden de pago** con un enlace seguro de 24 horas.
-6. El Cliente paga desde ese enlace. Al confirmarse el pago, el proyecto pasa a **en ejecución** y ambas partes reciben una notificación.
-7. Al terminar, el Cliente envía una **evaluación privada** (sin estrellas públicas). Si hay problemas, cualquiera de las partes reporta una **incidencia** y Skilly media.
+1. El **Profesional** publica un **servicio** (título, descripción, precio y duración) y lo envía a revisión.
+2. El **Administrador** de Skilly lo revisa: lo aprueba, pide cambios o propone un precio. Solo los servicios validados aparecen en el catálogo (`/buscar`).
+3. El **Contratador** (en la base de datos, `cliente`) elige un servicio del catálogo y lo contrata con una fecha de inicio.
+4. El Administrador genera una **orden de pago** con un enlace seguro de 24 horas.
+5. El Contratador paga desde ese enlace. Al confirmarse el pago, la contratación pasa a **en ejecución** y ambas partes reciben una notificación.
+6. Al terminar, el Contratador envía una **evaluación privada** (sin estrellas públicas; la lee solo el administrador). Si hay problemas, cualquiera de las partes reporta una **incidencia** y Skilly media.
 
 Los cambios de estado críticos los valida la base de datos (funciones, triggers y políticas RLS), no el navegador.
 
@@ -70,14 +69,17 @@ Los scripts están en la carpeta [`database/`](database/). Se ejecutan en el **S
 | 2 | `02_llaves_primarias.sql` | Agrega las llaves primarias |
 | 3 | `03_llaves_foraneas.sql` | Agrega las llaves foráneas |
 | 4 | `06_indices.sql` | Crea los índices |
-| 5 | `07_propuesta_correcciones.sql` | Políticas RLS, triggers de protección y funciones del flujo (validación, selección de propuesta, pagos) |
+| 5 | `07_propuesta_correcciones.sql` | Políticas RLS, triggers de protección y funciones del flujo base |
+| 6 | `09_catalogo_servicios.sql` | Catálogo de servicios, revisión por el administrador y función `contratar_servicio` |
+| 7 | `10_cerrar_flujo_antiguo_y_enlace_pago.sql` | Cierra el flujo anterior, restringe los estados que puede cambiar el Contratador y agrega el enlace de pago |
+| 8 | `11_evaluaciones_privadas_jsonb.sql` | Evaluaciones privadas como documento JSONB con índice GIN y lectura solo para el administrador |
 
 Scripts de limpieza (solo para reiniciar un entorno de pruebas, **borran datos**):
 
 - `04_drop_llaves_foraneas.sql`
 - `05_drop_tablas.sql`
 
-El script 07 corre dentro de una transacción: si falla, no queda nada a medias. Pruébalo primero en un proyecto de Supabase de prueba.
+Los scripts 07 y 09 a 11 corren dentro de una transacción: si falla, no queda nada a medias. Pruébalo primero en un proyecto de Supabase de prueba.
 
 ### Crear la cuenta de administrador
 
@@ -109,7 +111,7 @@ El pago funciona con un flujo **simulado** (sandbox) que imita Webpay:
 ```
 app/
   api/payments/      endpoints de creación y confirmación de pagos
-  buscar/            catálogo público de proyectos validados
+  buscar/            catálogo público de servicios validados
   dashboard/         paneles por rol (cliente, profesional, admin)
   login, registro, onboarding, verificar-correo, auth/
   pago/[token]/      pantalla de pago con enlace seguro
@@ -126,14 +128,19 @@ database/            scripts SQL del modelo físico
 | `npm run build` | Compilación de producción |
 | `npm start` | Servidor de producción (después de `build`) |
 | `npm run lint` | Revisión con ESLint |
+| `npm test` | 22 pruebas unitarias (`tests/unit`, ejecutor `node:test` de Node, sin dependencias) |
 
 ## Estado actual y limitaciones conocidas
 
 - Pago simulado; no hay conciliación con una pasarela real.
-- Las evaluaciones privadas y las incidencias se guardan como texto en la descripción del proyecto. Está planificada una tabla propia con acceso restringido al administrador.
+- Las evaluaciones privadas ya tienen su propia tabla (JSONB, solo lectura del administrador). Las incidencias y dictámenes siguen guardándose como texto en la descripción de la contratación; está planificada una tabla propia.
 - La agenda de entrevistas de validación no se guarda en una tabla.
 - La interfaz de carga y revisión de documentos del profesional está pendiente (la tabla ya existe).
-- Al seleccionar una propuesta, las demás no se rechazan automáticamente.
+- Faltan pruebas de rendimiento (JMeter) y de usabilidad con evaluadores externos.
+
+## Colaboración
+
+Nadie sube directamente a `main`. Cada cambio se hace en una rama (`feat/…`, `fix/…`, `docs/…`), se envía con un Pull Request y lo revisa otro integrante antes de fusionarlo. Antes de abrir el Pull Request se ejecutan `npm test`, `npx tsc --noEmit` y `npm run lint`. La guía completa está en el anexo «Guía de GitHub y del Entorno de Desarrollo» del informe.
 
 ## Despliegue
 

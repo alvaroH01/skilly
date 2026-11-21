@@ -11,6 +11,16 @@ type Props = {
   projectTitle: string;
 };
 
+/**
+ * Ventana para que el Contratador registre la evaluación privada de un servicio.
+ *
+ * Arma el documento JSON (plazos, calidad, comunicación, fortalezas y mejoras) y lo envía con la función submit_private_evaluation. La función verifica que el usuario sea el Contratador, que el servicio esté pagado y que no exista otra evaluación, y valida los valores con un catálogo cerrado. La evaluación solo la lee el administrador.
+ *
+ * @param props.projectId Contratación que se evalúa.
+ * @param props.projectTitle Título mostrado en la ventana.
+ *
+ * @returns Botón que abre el modal con el formulario de evaluación.
+ */
 export default function PrivateEvaluationModal({
   projectId,
   projectTitle,
